@@ -32,6 +32,19 @@ def login_view(request):
         form = LoginForm()
     return render(request, 'accounts/login.html', {'form': form})
 
+def agency_request(request):
+    if request.method == 'POST':
+        form = AgencyCreateForm(request.POST)
+        if form.is_valid():
+            agency = form.save(commit=False)
+            agency.verified = False  # en attente
+            agency.save()
+            messages.success(request, "Votre demande d'agence a été envoyée. Elle sera validée par un administrateur.")
+            return redirect('index')
+    else:
+        form = AgencyCreateForm()
+    return render(request, 'accounts/agency_request.html', {'form': form})
+
 @login_required
 def logout_view(request):
     logout(request)

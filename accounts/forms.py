@@ -8,12 +8,12 @@ class AgencyCreateForm(forms.ModelForm):
         fields = ['name', 'email', 'phone', 'city', 'address', 'description', 'logo_url']
 
 class SignUpForm(UserCreationForm):
-    role = forms.ChoiceField(choices=User.Roles.choices, initial=User.Roles.CUSTOMER)
+    #role = forms.ChoiceField(choices=User.Roles.choices, initial=User.Roles.CUSTOMER)
     agency = forms.ModelChoiceField(queryset=Agency.objects.all(), required=False)
 
     class Meta(UserCreationForm.Meta):
         model = User
-        fields = ('username', 'email', 'role', 'agency')
+        fields = ('username', 'email',  'agency')
 
 class LoginForm(AuthenticationForm):
     username = forms.CharField(widget=forms.TextInput(attrs={'autofocus': True}))

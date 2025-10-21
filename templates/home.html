@@ -1,0 +1,142 @@
+{% extends "base.html" %}
+{% block content %}
+<div class="container">
+  <h1 class="mb-4">Tableau de bord TogoEstate</h1>
+  <p class="lead">Vue cockpit de l’activité en temps réel</p>
+
+  <!-- Stats rapides -->
+  <div class="row text-center mb-4">
+    <div class="col-md-4">
+      <div class="card shadow-sm">
+        <div class="card-body">
+          <h2>{{ stats.agencies_count }}</h2>
+          <p>Agences</p>
+        </div>
+      </div>
+    </div>
+    <div class="col-md-4">
+      <div class="card shadow-sm">
+        <div class="card-body">
+          <h2>{{ stats.listings_count }}</h2>
+          <p>Annonces publiées</p>
+        </div>
+      </div>
+    </div>
+    <div class="col-md-4">
+      <div class="card shadow-sm">
+        <div class="card-body">
+          <h2>{{ stats.users_count }}</h2>
+          <p>Utilisateurs</p>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Graphique annonces par mois -->
+  <div class="card mb-4">
+    <div class="card-body">
+      <h5 class="card-title">Évolution des annonces (6 derniers mois)</h5>
+      <canvas id="listingsChart"></canvas>
+    </div>
+  </div>
+
+  <!-- Widgets récents -->
+  <div class="row">
+    <div class="col-md-6">
+      <h4>Dernières annonces</h4>
+      <ul class="list-group">
+        {% for l in recent_listings %}
+          <li class="list-group-item">
+            <strong>{{ l.title }}</strong> – {{ l.price }} {{ l.currency }}
+            <br><small>{{ l.city }} – {{ l.created_at|date:"d/m/Y" }}</small>
+          </li>
+        {% empty %}
+          <li class="list-group-item">Aucune annonce récente</li>
+        {% endfor %}
+      </ul>
+    </div>
+    <div class="col-md-6">
+      <h4>Dernières agences</h4>
+      <ul class="list-group">
+        {% for a in recent_agencies %}
+          <li class="list-group-item">
+            <strong>{{ a.name }}</strong> – {{ a.city }}
+            <br><small>Créée le {{ a.created_at|date:"d/m/Y" }}</small>
+          </li>
+        {% empty %}
+          <li class="list-group-item">Aucune agence récente</li>
+        {% endfor %}
+      </ul>
+    </div>
+  </div>
+</div>
+
+<!-- Chart.js -->
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<script>
+  const ctx = document.getElementById('listingsChart').getContext('2d');
+  const chart = new Chart(ctx, {
+    type: 'line',
+    data: {
+      labels: [{% for row in listings_by_month %}'{{ row.month|date:"Y-m" }}',{% endfor %}],
+datasets: [{
+  label: 'Annonces publiées',
+  data: [{% for row in listings_by_month %}{{ row.total }},{% endfor %}],
+  borderColor: 'rgba(75, 192, 192, 1)',
+  fill: false,
+  tension: 0.1
+}]
+    }
+  });
+</script>
+
+<div class="card mt-5">
+  <div class="card-body">
+    <h5 class="card-title">🕒 Activité récente</h5>
+
+    <!-- Boutons de filtre -->
+    <div class="mb-3 text-center">
+      <button class="btn btn-outline-secondary btn-sm filter-btn" data-filter="all">Tout</button>
+      <button class="btn btn-outline-success btn-sm filter-btn" data-filter="Annonce">🏠 Annonces</button>
+      <button class="btn btn-outline-primary btn-sm filter-btn" data-filter="Agence">🏢 Agences</button>
+      <button class="btn btn-outline-dark btn-sm filter-btn" data-filter="Utilisateur">👤 Utilisateurs</button>
+    </div>
+
+    <!-- Timeline -->
+    <div class="timeline">
+      {% for e in recent_events %}
+        <div class="timeline-item {% cycle 'left' 'right' %} 
+             {% if e.type == 'Annonce' %}annonce{% elif e.type == 'Agence' %}agence{% else %}utilisateur{% endif %}"
+             data-type="{{ e.type }}">
+          <div class="content">
+            <h6>{{ e.icon }} {{ e.type }}</h6>
+            <p><strong>{{ e.title }}</strong>{% if e.city and e.city != "-" %} – {{ e.city }}{% endif %}</p>
+            <small class="text-muted">{{ e.timestamp|date:"d/m/Y H:i" }}</small>
+          </div>
+        </div>
+      {% empty %}
+        <p class="text-muted">Aucune activité récente</p>
+      {% endfor %}
+    </div>
+  </div>
+</div>
+
+<!-- Script de filtrage -->
+<script>
+document.querySelectorAll('.filter-btn').forEach(btn => {
+  btn.addEventListener('click', () => {
+    const filter = btn.getAttribute('data-filter');
+    document.querySelectorAll('.timeline-item').forEach(item => {
+      if (filter === 'all' || item.getAttribute('data-type') === filter) {
+        item.style.display = 'block';
+      } else {
+        item.style.display = 'none';
+      }
+    });
+    // Mettre en évidence le bouton actif
+    document.querySelectorAll('.filter-btn').forEach(b => b.classList.remove('active'));
+    btn.classList.add('active');
+  });
+});
+</script>
+{% endblock %}

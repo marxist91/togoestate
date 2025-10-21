@@ -48,6 +48,13 @@ class User(AbstractUser):
         null=True, blank=True,
         related_name='users'
     )
+    
+    def save(self, *args, **kwargs):
+        # Si l’utilisateur n’est pas superuser, forcer le rôle customer par défaut
+        if not self.is_superuser and not self.pk:  
+            self.role = self.Roles.CUSTOMER
+        super().save(*args, **kwargs)
+
 
     # champs natifs AbstractUser: username, email, password, first_name, last_name, is_active, etc.
 

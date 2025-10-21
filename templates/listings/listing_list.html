@@ -1,0 +1,22 @@
+{% extends "base.html" %}
+{% block content %}
+<h2>Annonces immobilières</h2>
+<div class="row">
+  {% for l in listings %}
+  <div class="col-md-4">
+    <div class="card mb-3">
+      {% if l.photos.first %}
+        <img src="{{ l.photos.first.image_url }}" class="card-img-top">
+      {% endif %}
+      <div class="card-body">
+        <h5 class="card-title">{{ l.title }}</h5>
+        <p>{{ l.price }} {{ l.currency }} – {{ l.city }}</p>
+        <a href="{% url 'listing_detail' l.slug %}" class="btn btn-primary">Voir</a>
+      </div>
+    </div>
+  </div>
+  {% empty %}
+  <p>Aucune annonce disponible.</p>
+  {% endfor %}
+</div>
+{% endblock %}

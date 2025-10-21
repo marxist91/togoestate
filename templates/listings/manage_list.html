@@ -1,0 +1,11 @@
+{% extends "base.html" %}
+{% block content %}
+<h2>Mes annonces</h2>
+<ul>
+  {% for l in listings %}
+    <li>{{ l.title }} – {{ l.price }} {{ l.currency }}</li>
+  {% empty %}
+    <li>Aucune annonce trouvée.</li>
+  {% endfor %}
+</ul>
+{% endblock %}
