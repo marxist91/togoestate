@@ -1,0 +1,13 @@
+{% extends "base.html" %}
+{% block content %}
+<h2>Dashboard Agence</h2>
+{% if agency %}
+  <p>Agence: {{ agency.name }} ({{ agency.city }}) {% if agency.verified %}✔ Vérifiée{% else %}⏳ En attente{% endif %}</p>
+{% else %}
+  <p>Aucune agence liée à votre compte.</p>
+{% endif %}
+<h4>Équipe</h4>
+<ul>
+  {% for u in agency_users %}<li>{{ u.username }} – {{ u.role }}</li>{% empty %}<li>Aucun utilisateur</li>{% endfor %}
+</ul>
+{% endblock %}

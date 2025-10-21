@@ -1,0 +1,9 @@
+{% extends "base.html" %}
+{% block content %}
+<h2>Dashboard Plateforme</h2>
+<ul>
+  <li>Agences: {{ agencies_count }}</li>
+  <li>Utilisateurs: {{ users_count }}</li>
+</ul>
+<a href="{% url 'agency_list' %}" class="btn btn-outline-primary">Gérer les agences</a>
+{% endblock %}

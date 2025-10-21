@@ -1,0 +1,22 @@
+{% extends "base.html" %}
+{% block content %}
+<h2>Agences</h2>
+<a class="btn btn-success mb-3" href="{% url 'agency_create' %}">➕ Nouvelle agence</a>
+<table class="table">
+  <thead><tr><th>Nom</th><th>Ville</th><th>Vérifiée</th><th>Actions</th></tr></thead>
+  <tbody>
+    {% for a in agencies %}
+    <tr>
+      <td>{{ a.name }}</td>
+      <td>{{ a.city }}</td>
+      <td>{% if a.verified %}✔{% else %}—{% endif %}</td>
+      <td>
+        {% if not a.verified %}
+        <a class="btn btn-sm btn-outline-primary" href="{% url 'agency_verify' a.slug %}">Vérifier</a>
+        {% endif %}
+      </td>
+    </tr>
+    {% endfor %}
+  </tbody>
+</table>
+{% endblock %}
