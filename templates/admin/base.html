@@ -1,0 +1,12 @@
+{% extends "admin/base.html" %}
+
+{% block nav-global %}
+  {{ block.super }}
+  {% if request.user.is_authenticated %}
+    {% if request.user.is_superuser or request.user.is_platform_admin or request.user.is_agency_admin or request.user.is_agent %}
+      <a href="{% url 'admin:mes-annonces' %}" class="nav-link">
+        📋 Mes annonces
+      </a>
+    {% endif %}
+  {% endif %}
+{% endblock %}

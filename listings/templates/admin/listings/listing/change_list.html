@@ -1,0 +1,100 @@
+{% extends "admin/change_list.html" %}
+{% load i18n %}
+
+{% block content %}
+    {{ block.super }}
+
+    <section style="margin: 2em 0;">
+        <h2>📊 Tableau de bord cockpit</h2>
+
+        <!-- Bloc stats -->
+        <div style="display: flex; gap: 2em; margin: 1em 0;">
+            <div style="padding: 1em; background: #f5f5f5; border-radius: 6px;">
+                <strong>Total annonces :</strong> {{ stats.total }}
+            </div>
+            <div style="padding: 1em; background: #f5f5f5; border-radius: 6px;">
+                <strong>Publiées :</strong> {{ stats.published }}
+            </div>
+            <div style="padding: 1em; background: #f5f5f5; border-radius: 6px;">
+                <strong>Non publiées :</strong> {{ stats.unpublished }}
+            </div>
+        </div>
+
+        <!-- Graphique global -->
+        <div id="chart-container" style="max-width: 600px; margin: 2em auto;">
+            <canvas id="listingChart"></canvas>
+        </div>
+
+        <!-- Graphique par agence -->
+        <div id="agency-chart-container" style="max-width: 800px; margin: 2em auto;">
+            <h3>📈 Annonces par agence</h3>
+            <canvas id="agencyChart"></canvas>
+        </div>
+
+        <!-- Timeline -->
+        <div id="timeline-chart-container" style="max-width: 800px; margin: 2em auto;">
+            <h3>📅 Évolution des annonces par mois</h3>
+            <canvas id="timelineChart"></canvas>
+        </div>
+    </section>
+<p id="debug-marker">TEMPLATE OVERRIDE OK 🚀</p>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script>
+      // Pie chart global
+      const ctx = document.getElementById('listingChart').getContext('2d');
+      new Chart(ctx, {
+        type: 'pie',
+        data: {
+          labels: ['Publiées', 'Non publiées'],
+          datasets: [{
+            label: 'Annonces',
+            data: [{{ stats.published }}, {{ stats.unpublished }}],
+            backgroundColor: ['#4CAF50', '#F44336']
+          }]
+        },
+        options: { responsive: true }
+      });
+
+      // Bar chart par agence
+      const agencyCtx = document.getElementById('agencyChart').getContext('2d');
+      new Chart(agencyCtx, {
+        type: 'bar',
+        data: {
+          labels: [{% for row in agency_stats %}"{{ row.agency__name|default:'(Sans agence)' }}"{% if not forloop.last %}, {% endif %}{% endfor %}],
+          datasets: [{
+            label: "Nombre d'annonces",
+            data: [{% for row in agency_stats %}{{ row.total }}{% if not forloop.last %}, {% endif %}{% endfor %}],
+            backgroundColor: '#2196F3'
+          }]
+        },
+        options: { responsive: true }
+      });
+
+      // Line chart timeline
+      const timelineCtx = document.getElementById('timelineChart').getContext('2d');
+      new Chart(timelineCtx, {
+        type: 'line',
+        data: {
+          labels: [{% for row in timeline_stats %}"{{ row.month|date:'M Y' }}"{% if not forloop.last %}, {% endif %}{% endfor %}],
+          datasets: [{
+            label: "Annonces créées",
+            data: [{% for row in timeline_stats %}{{ row.total }}{% if not forloop.last %}, {% endif %}{% endfor %}],
+            borderColor: '#673AB7',
+            backgroundColor: 'rgba(103,58,183,0.2)',
+            fill: true,
+            tension: 0.3
+          }]
+        },
+        options: {
+          responsive: true,
+          plugins: {
+            title: { display: true, text: "Évolution des annonces par mois" }
+          },
+          scales: {
+            x: { title: { display: true, text: 'Mois' } },
+            y: { title: { display: true, text: "Nombre d'annonces" }, beginAtZero: true }
+          }
+        }
+      });
+    </script>
+{% endblock %}

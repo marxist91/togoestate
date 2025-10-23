@@ -45,6 +45,29 @@ def agency_request(request):
         form = AgencyCreateForm()
     return render(request, 'accounts/agency_request.html', {'form': form})
 
+
+
+def dashboard_agence(request, agency_id):
+    agency = get_object_or_404(Agency, id=agency_id)
+
+    # Récupérer les utilisateurs liés à l’agence
+    equipe = agency.users.all()  # si related_name="users"
+
+    # Stats annonces
+    listings_total = agency.listings.count()
+    listings_published = agency.listings.filter(published=True).count()
+
+    context = {
+        "agency": agency,
+        "equipe": equipe,
+        "listings_total": listings_total,
+        "listings_published": listings_published,
+    }
+    return render(request, "dashboard_agence.html", context)
+
+
+
+
 @login_required
 def logout_view(request):
     logout(request)

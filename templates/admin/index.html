@@ -1,0 +1,64 @@
+{% extends "admin/index.html" %}
+
+{% block content %}
+  <h1>Tableau de bord cockpit</h1>
+
+  <div style="padding:1em; border:1px solid #ccc; border-radius:5px; background:#f9f9f9; margin-bottom:2em;">
+    <h2>Audit qualité des données</h2>
+    <p><strong>Total annonces :</strong> {{ audit.total_annonces }}</p>
+    <canvas id="auditChart" width="400" height="200"></canvas>
+  </div>
+
+  {{ block.super }}
+{% endblock %}
+
+{% block extrahead %}
+  {{ block.super }}
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  <style>
+    #auditChart {
+      max-width: 500px;
+      margin-top: 1em;
+    }
+  </style>
+  <script>
+    document.addEventListener("DOMContentLoaded", function() {
+      const ctx = document.getElementById('auditChart').getContext('2d');
+      new Chart(ctx, {
+        type: 'bar',
+        data: {
+          labels: ['Total', 'Sans ville', 'Sans quartier'],
+          datasets: [{
+            label: 'Audit Listings',
+            data: [
+              {{ audit.total_annonces }},
+              {{ audit.missing_city }},
+              {{ audit.missing_district }}
+            ],
+            backgroundColor: [
+              'rgba(54, 162, 235, 0.7)',
+              'rgba(255, 99, 132, 0.7)',
+              'rgba(255, 206, 86, 0.7)'
+            ],
+            borderColor: [
+              'rgba(54, 162, 235, 1)',
+              'rgba(255, 99, 132, 1)',
+              'rgba(255, 206, 86, 1)'
+            ],
+            borderWidth: 1
+          }]
+        },
+        options: {
+          responsive: true,
+          plugins: {
+            legend: { display: false },
+            title: { display: true, text: 'Qualité des données Listings' }
+          },
+          scales: {
+            y: { beginAtZero: true }
+          }
+        }
+      });
+    });
+  </script>
+{% endblock %}

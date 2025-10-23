@@ -6,8 +6,12 @@
 {% else %}
   <p>Aucune agence liée à votre compte.</p>
 {% endif %}
-<h4>Équipe</h4>
+<h2>Équipe</h2>
 <ul>
-  {% for u in agency_users %}<li>{{ u.username }} – {{ u.role }}</li>{% empty %}<li>Aucun utilisateur</li>{% endfor %}
+  {% for user in equipe %}
+    <li>{{ user.username }} – {{ user.role|default:"agent" }}</li>
+  {% empty %}
+    <li>Aucun membre dans cette agence</li>
+  {% endfor %}
 </ul>
 {% endblock %}

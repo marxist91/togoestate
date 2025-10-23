@@ -1,0 +1,51 @@
+{% extends "admin/base_site.html" %}
+{% load i18n %}
+
+{% block content %}
+  <h1>{{ title }}</h1>
+
+  <h2>Statistiques d'audit</h2>
+  <table class="admin-audit-report">
+    <tr>
+      <th>Total annonces</th>
+      <td>{{ report.total_annonces }}</td>
+    </tr>
+    <tr>
+      <th>Missing city count</th>
+      <td>{{ report.missing_city_count }}</td>
+    </tr>
+    <tr>
+      <th>Missing district count</th>
+      <td>{{ report.missing_district_count }}</td>
+    </tr>
+  </table>
+
+  <h2>Détails</h2>
+  <p>IDs sans ville : {{ report.missing_city_ids }}</p>
+  <p>IDs sans district : {{ report.missing_district_ids }}</p>
+
+  <h2>Graphiques</h2>
+  <div id="chart-container">
+    <canvas id="auditChart"></canvas>
+  </div>
+
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  <script>
+    const ctx = document.getElementById('auditChart').getContext('2d');
+    new Chart(ctx, {
+      type: 'bar',
+      data: {
+        labels: ['Total', 'Missing City', 'Missing District'],
+        datasets: [{
+          label: 'Audit Stats',
+          data: [
+            {{ report.total_annonces }},
+            {{ report.missing_city_count }},
+            {{ report.missing_district_count }}
+          ],
+          backgroundColor: ['#4CAF50', '#FF9800', '#F44336']
+        }]
+      }
+    });
+  </script>
+{% endblock %}

@@ -1,0 +1,44 @@
+{% extends "admin/change_form.html" %}
+
+{% block after_related_objects %}
+  <div style="margin:2em 0; padding:1em; border:1px solid #ccc; border-radius:5px; background:#f9f9f9;">
+    <h2>📊 Tableau de bord de l’agence</h2>
+    <ul>
+      <li><strong>Utilisateurs :</strong> {{ stats.users_count }}</li>
+      <li><strong>Annonces totales :</strong> {{ stats.listings_total }}</li>
+      <li><strong>Annonces publiées :</strong> {{ stats.listings_published }}</li>
+      <li><strong>Annonces non publiées :</strong> {{ stats.listings_unpublished }}</li>
+    </ul>
+
+    <canvas id="agencyChart" width="400" height="200"></canvas>
+  </div>
+
+  {{ block.super }}
+{% endblock %}
+
+{% block extrahead %}
+  {{ block.super }}
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  <script>
+    document.addEventListener("DOMContentLoaded", function() {
+      const ctx = document.getElementById('agencyChart').getContext('2d');
+      new Chart(ctx, {
+        type: 'doughnut',
+        data: {
+          labels: ['Publiées', 'Non publiées'],
+          datasets: [{
+            data: [{{ stats.listings_published }}, {{ stats.listings_unpublished }}],
+            backgroundColor: ['rgba(54, 162, 235, 0.7)', 'rgba(255, 99, 132, 0.7)'],
+            borderColor: ['rgba(54, 162, 235, 1)', 'rgba(255, 99, 132, 1)'],
+            borderWidth: 1
+          }]
+        },
+        options: {
+          plugins: {
+            title: { display: true, text: 'Répartition des annonces' }
+          }
+        }
+      });
+    });
+  </script>
+{% endblock %}

@@ -1,0 +1,18 @@
+{% extends "admin/base_site.html" %}
+{% block content %}
+<h1>Tableau de bord cockpit</h1>
+
+<div style="display:flex; gap:2em;">
+  <div style="flex:1; padding:1em; border:1px solid #ccc; border-radius:5px; background:#f9f9f9;">
+    <h2>Audit qualité des données</h2>
+    <p><strong>Total annonces :</strong> {{ total }}</p>
+    <p><strong>Annonces sans ville :</strong> {{ missing_city }}</p>
+    <p><strong>Annonces sans quartier :</strong> {{ missing_district }}</p>
+  </div>
+
+  <div style="flex:1; padding:1em; border:1px solid #ccc; border-radius:5px; background:#eef;">
+    <h2>Actions récentes</h2>
+    {{ block.super }}
+  </div>
+</div>
+{% endblock %}

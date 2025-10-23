@@ -1,6 +1,7 @@
 from django.db import models
 from django.utils.text import slugify
 from accounts.models import Agency ,User
+from locations.models import City, District
 
 
 class Listing(models.Model):
@@ -27,7 +28,10 @@ class Listing(models.Model):
     bedrooms = models.PositiveIntegerField(null=True, blank=True)
     bathrooms = models.PositiveIntegerField(null=True, blank=True)
     surface = models.PositiveIntegerField(null=True, blank=True, help_text="Surface en m²")
-    city = models.CharField(max_length=100)
+    #old_city = models.CharField(max_length=100, null=True, blank=True)
+    city = models.ForeignKey(City, on_delete=models.PROTECT, related_name="listings", null=True, blank=True)
+    district = models.ForeignKey(District, on_delete=models.PROTECT, related_name="listings", null=True, blank=True)
+
     address = models.CharField(max_length=255, blank=True)
     description = models.TextField(blank=True)
     published = models.BooleanField(default=False)

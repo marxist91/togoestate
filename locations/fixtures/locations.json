@@ -1,0 +1,8 @@
+[
+  { "model": "locations.city", "pk": 1, "fields": { "name": "Lomé" } },
+  { "model": "locations.district", "pk": 1, "fields": { "city": 1, "name": "Tokoin" } },
+  { "model": "locations.district", "pk": 2, "fields": { "city": 1, "name": "Bè" } },
+  { "model": "locations.district", "pk": 3, "fields": { "city": 1, "name": "Agoè" } },
+  { "model": "locations.district", "pk": 4, "fields": { "city": 1, "name": "Adidogomé" } },
+  { "model": "locations.district", "pk": 5, "fields": { "city": 1, "name": "Kégué" } }
+]

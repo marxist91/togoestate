@@ -44,6 +44,7 @@ INSTALLED_APPS = [
     'accounts',
     'listings',
     'rest_framework',
+    'locations',
 
 ]
 
