@@ -1,22 +1,763 @@
 {% extends "base.html" %}
 {% block content %}
-<h2>Agences</h2>
-<a class="btn btn-success mb-3" href="{% url 'agency_create' %}">➕ Nouvelle agence</a>
-<table class="table">
-  <thead><tr><th>Nom</th><th>Ville</th><th>Vérifiée</th><th>Actions</th></tr></thead>
-  <tbody>
-    {% for a in agencies %}
-    <tr>
-      <td>{{ a.name }}</td>
-      <td>{{ a.city }}</td>
-      <td>{% if a.verified %}✔{% else %}—{% endif %}</td>
-      <td>
-        {% if not a.verified %}
-        <a class="btn btn-sm btn-outline-primary" href="{% url 'agency_verify' a.slug %}">Vérifier</a>
-        {% endif %}
-      </td>
-    </tr>
-    {% endfor %}
-  </tbody>
-</table>
+
+<style>
+  :root {
+    --primary: #1976D2;
+    --secondary: #FF9800;
+    --success: #2E7D32;
+    --warning: #EF6C00;
+    --danger: #D32F2F;
+  }
+
+  /* Header */
+  .page-header {
+    background: linear-gradient(135deg, var(--primary) 0%, #1565C0 100%);
+    color: white;
+    padding: 2rem;
+    border-radius: 16px;
+    margin-bottom: 2rem;
+    box-shadow: 0 8px 32px rgba(25, 118, 210, 0.25);
+    position: relative;
+    overflow: hidden;
+  }
+
+  .page-header::before {
+    content: '';
+    position: absolute;
+    top: -50%;
+    right: -10%;
+    width: 300px;
+    height: 300px;
+    background: rgba(255, 255, 255, 0.1);
+    border-radius: 50%;
+  }
+
+  .header-content {
+    position: relative;
+    z-index: 1;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 1.5rem;
+  }
+
+  .header-info h1 {
+    font-size: 2rem;
+    font-weight: 700;
+    margin: 0 0 0.5rem 0;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+  }
+
+  .header-subtitle {
+    font-size: 1rem;
+    opacity: 0.9;
+    margin: 0;
+  }
+
+  .btn-header {
+    padding: 0.7rem 1.5rem;
+    background: rgba(255, 255, 255, 0.2);
+    color: white;
+    border-radius: 8px;
+    text-decoration: none;
+    font-weight: 600;
+    backdrop-filter: blur(10px);
+    border: 2px solid rgba(255, 255, 255, 0.3);
+    transition: all 0.3s;
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5rem;
+  }
+
+  .btn-header:hover {
+    background: white;
+    color: var(--primary);
+    transform: translateY(-2px);
+  }
+
+  /* Stats Bar */
+  .stats-bar {
+    display: flex;
+    gap: 1rem;
+    flex-wrap: wrap;
+    margin-bottom: 2rem;
+  }
+
+  .stat-chip {
+    background: white;
+    padding: 1rem 1.5rem;
+    border-radius: 12px;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+  }
+
+  .stat-chip-icon {
+    width: 45px;
+    height: 45px;
+    border-radius: 10px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1.3rem;
+  }
+
+  .stat-chip-icon.primary {
+    background: rgba(25, 118, 210, 0.15);
+    color: var(--primary);
+  }
+
+  .stat-chip-icon.success {
+    background: rgba(46, 125, 50, 0.15);
+    color: var(--success);
+  }
+
+  .stat-chip-icon.warning {
+    background: rgba(239, 108, 0, 0.15);
+    color: var(--warning);
+  }
+
+  .stat-chip-content {
+    display: flex;
+    flex-direction: column;
+  }
+
+  .stat-chip-value {
+    font-size: 1.5rem;
+    font-weight: 700;
+    line-height: 1;
+  }
+
+  .stat-chip-label {
+    font-size: 0.85rem;
+    color: #6c757d;
+  }
+
+  /* Filters */
+  .filters-section {
+    background: white;
+    padding: 1.5rem;
+    border-radius: 12px;
+    margin-bottom: 2rem;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+  }
+
+  .filters-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+    gap: 1rem;
+  }
+
+  .filter-group {
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+  }
+
+  .filter-group label {
+    font-size: 0.9rem;
+    font-weight: 600;
+    color: #495057;
+  }
+
+  .filter-group input,
+  .filter-group select {
+    padding: 0.6rem;
+    border: 2px solid #e9ecef;
+    border-radius: 8px;
+    transition: all 0.3s;
+  }
+
+  .filter-group input:focus,
+  .filter-group select:focus {
+    outline: none;
+    border-color: var(--primary);
+  }
+
+  .filter-actions {
+    display: flex;
+    gap: 0.75rem;
+    margin-top: 1rem;
+  }
+
+  .btn {
+    padding: 0.6rem 1.2rem;
+    border-radius: 8px;
+    text-decoration: none;
+    font-weight: 600;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.5rem;
+    transition: all 0.3s;
+    border: none;
+    cursor: pointer;
+  }
+
+  .btn-primary {
+    background: var(--primary);
+    color: white;
+  }
+
+  .btn-primary:hover {
+    background: #1565C0;
+    transform: translateY(-2px);
+  }
+
+  .btn-secondary {
+    background: #6c757d;
+    color: white;
+  }
+
+  .btn-secondary:hover {
+    background: #5a6268;
+  }
+
+  /* View Toggle */
+  .view-toggle {
+    display: flex;
+    gap: 0.5rem;
+    margin-bottom: 1.5rem;
+  }
+
+  .view-btn {
+    padding: 0.5rem 1rem;
+    background: white;
+    border: 2px solid #e9ecef;
+    border-radius: 8px;
+    cursor: pointer;
+    transition: all 0.3s;
+    font-weight: 600;
+    color: #6c757d;
+  }
+
+  .view-btn.active {
+    background: var(--primary);
+    border-color: var(--primary);
+    color: white;
+  }
+
+  .view-btn:hover:not(.active) {
+    border-color: var(--primary);
+  }
+
+  /* Grid View */
+  .agencies-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
+    gap: 1.5rem;
+  }
+
+  .agency-card {
+    background: white;
+    border-radius: 12px;
+    padding: 1.5rem;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+    transition: all 0.3s;
+    border: 2px solid transparent;
+  }
+
+  .agency-card:hover {
+    transform: translateY(-6px);
+    box-shadow: 0 8px 24px rgba(0,0,0,0.12);
+    border-color: var(--primary);
+  }
+
+  .agency-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: start;
+    margin-bottom: 1rem;
+  }
+
+  .agency-logo {
+    width: 60px;
+    height: 60px;
+    border-radius: 12px;
+    background: linear-gradient(135deg, var(--primary), #1565C0);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: white;
+    font-size: 1.5rem;
+    font-weight: 700;
+  }
+
+  .agency-badge {
+    padding: 0.4rem 0.8rem;
+    border-radius: 20px;
+    font-size: 0.8rem;
+    font-weight: 600;
+    display: inline-flex;
+    align-items: center;
+    gap: 0.3rem;
+  }
+
+  .badge-verified {
+    background: #E8F5E9;
+    color: var(--success);
+    border: 1px solid #C8E6C9;
+  }
+
+  .badge-pending {
+    background: #FFF3E0;
+    color: var(--warning);
+    border: 1px solid #FFE0B2;
+  }
+
+  .agency-name {
+    font-size: 1.3rem;
+    font-weight: 700;
+    color: #212529;
+    margin: 0 0 0.5rem 0;
+  }
+
+  .agency-info {
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+    margin-bottom: 1rem;
+  }
+
+  .agency-info-row {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    color: #6c757d;
+    font-size: 0.9rem;
+  }
+
+  .agency-info-row i {
+    width: 16px;
+    color: var(--primary);
+  }
+
+  .agency-actions {
+    display: flex;
+    gap: 0.5rem;
+    padding-top: 1rem;
+    border-top: 1px solid #e9ecef;
+  }
+
+  .btn-action {
+    flex: 1;
+    padding: 0.5rem;
+    border-radius: 6px;
+    text-decoration: none;
+    font-weight: 600;
+    font-size: 0.85rem;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.3rem;
+    transition: all 0.3s;
+  }
+
+  .btn-view {
+    background: #E3F2FD;
+    color: var(--primary);
+    border: 1px solid #90CAF9;
+  }
+
+  .btn-view:hover {
+    background: var(--primary);
+    color: white;
+  }
+
+  .btn-verify {
+    background: #E8F5E9;
+    color: var(--success);
+    border: 1px solid #C8E6C9;
+  }
+
+  .btn-verify:hover {
+    background: var(--success);
+    color: white;
+  }
+
+  .btn-edit {
+    background: #FFF3E0;
+    color: var(--secondary);
+    border: 1px solid #FFE0B2;
+  }
+
+  .btn-edit:hover {
+    background: var(--secondary);
+    color: white;
+  }
+
+  /* Table View */
+  .agencies-table-container {
+    background: white;
+    border-radius: 12px;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+    overflow: hidden;
+  }
+
+  .agencies-table {
+    width: 100%;
+    border-collapse: separate;
+    border-spacing: 0;
+  }
+
+  .agencies-table thead {
+    background: #f8f9fa;
+  }
+
+  .agencies-table th {
+    padding: 1rem;
+    text-align: left;
+    font-weight: 600;
+    color: #495057;
+    font-size: 0.9rem;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+  }
+
+  .agencies-table td {
+    padding: 1rem;
+    border-top: 1px solid #e9ecef;
+  }
+
+  .agencies-table tbody tr {
+    transition: all 0.3s;
+  }
+
+  .agencies-table tbody tr:hover {
+    background: #f8f9fa;
+  }
+
+  .table-agency-cell {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+  }
+
+  .table-logo {
+    width: 45px;
+    height: 45px;
+    border-radius: 10px;
+    background: linear-gradient(135deg, var(--primary), #1565C0);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: white;
+    font-size: 1.1rem;
+    font-weight: 700;
+    flex-shrink: 0;
+  }
+
+  /* Empty State */
+  .empty-state {
+    text-align: center;
+    padding: 4rem 2rem;
+    background: white;
+    border-radius: 12px;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+  }
+
+  .empty-icon {
+    font-size: 5rem;
+    margin-bottom: 1.5rem;
+    opacity: 0.3;
+  }
+
+  .empty-title {
+    font-size: 1.8rem;
+    font-weight: 700;
+    color: #212529;
+    margin: 0 0 0.75rem 0;
+  }
+
+  .empty-text {
+    font-size: 1.1rem;
+    color: #6c757d;
+    margin: 0 0 2rem 0;
+  }
+
+  /* Responsive */
+  @media (max-width: 768px) {
+    .header-content {
+      flex-direction: column;
+      align-items: flex-start;
+    }
+
+    .header-info h1 {
+      font-size: 1.5rem;
+    }
+
+    .btn-header {
+      width: 100%;
+      justify-content: center;
+    }
+
+    .stats-bar {
+      flex-direction: column;
+    }
+
+    .filters-grid {
+      grid-template-columns: 1fr;
+    }
+
+    .agencies-grid {
+      grid-template-columns: 1fr;
+    }
+
+    .agencies-table-container {
+      overflow-x: auto;
+    }
+
+    .agencies-table {
+      font-size: 0.85rem;
+    }
+
+    .agencies-table th,
+    .agencies-table td {
+      padding: 0.75rem 0.5rem;
+    }
+  }
+</style>
+
+<div class="container-fluid">
+  
+  <!-- Header -->
+  <header class="page-header">
+    <div class="header-content">
+      <div class="header-info">
+        <h1>🏢 Gestion des Agences</h1>
+        <p class="header-subtitle">Gérez toutes les agences de la plateforme TogoEstate</p>
+      </div>
+      <a href="{% url 'agency_create' %}" class="btn-header">
+        ➕ Nouvelle agence
+      </a>
+    </div>
+  </header>
+
+  <!-- Stats Bar -->
+  <div class="stats-bar">
+    <div class="stat-chip">
+      <div class="stat-chip-icon primary">
+        🏢
+      </div>
+      <div class="stat-chip-content">
+        <span class="stat-chip-value" style="color: var(--primary);">{{ agencies|length }}</span>
+        <span class="stat-chip-label">Total agences</span>
+      </div>
+    </div>
+
+    <div class="stat-chip">
+      <div class="stat-chip-icon success">
+        ✅
+      </div>
+      <div class="stat-chip-content">
+        <span class="stat-chip-value" style="color: var(--success);">
+          {% with verified_count=0 %}
+            {% for a in agencies %}
+              {% if a.verified %}
+                {% with verified_count=verified_count|add:1 %}{% endwith %}
+              {% endif %}
+            {% endfor %}
+            {{ verified_count }}
+          {% endwith %}
+        </span>
+        <span class="stat-chip-label">Vérifiées</span>
+      </div>
+    </div>
+
+    <div class="stat-chip">
+      <div class="stat-chip-icon warning">
+        ⏳
+      </div>
+      <div class="stat-chip-content">
+        <span class="stat-chip-value" style="color: var(--warning);">
+          {% with pending_count=0 %}
+            {% for a in agencies %}
+              {% if not a.verified %}
+                {% with pending_count=pending_count|add:1 %}{% endwith %}
+              {% endif %}
+            {% endfor %}
+            {{ pending_count }}
+          {% endwith %}
+        </span>
+        <span class="stat-chip-label">En attente</span>
+      </div>
+    </div>
+  </div>
+
+  <!-- Filters (Optional) -->
+  <!--
+  <div class="filters-section">
+    <form method="get">
+      <div class="filters-grid">
+        <div class="filter-group">
+          <label>Statut</label>
+          <select name="status">
+            <option value="">Tous</option>
+            <option value="verified">Vérifiées</option>
+            <option value="pending">En attente</option>
+          </select>
+        </div>
+        <div class="filter-group">
+          <label>Ville</label>
+          <select name="city">
+            <option value="">Toutes</option>
+            <option value="lome">Lomé</option>
+            <option value="kara">Kara</option>
+          </select>
+        </div>
+        <div class="filter-group">
+          <label>Rechercher</label>
+          <input type="text" name="search" placeholder="Nom de l'agence...">
+        </div>
+      </div>
+      <div class="filter-actions">
+        <button type="submit" class="btn btn-primary">🔍 Filtrer</button>
+        <a href="{% url 'agency_list' %}" class="btn btn-secondary">🔄 Réinitialiser</a>
+      </div>
+    </form>
+  </div>
+  -->
+
+  {% if agencies %}
+    <!-- View Toggle -->
+    <div class="view-toggle">
+      <button class="view-btn active" onclick="switchView('grid')">
+        <i class="fa-solid fa-grip"></i> Grille
+      </button>
+      <button class="view-btn" onclick="switchView('table')">
+        <i class="fa-solid fa-table"></i> Tableau
+      </button>
+    </div>
+
+    <!-- Grid View -->
+    <div id="gridView" class="agencies-grid">
+      {% for agency in agencies %}
+        <div class="agency-card">
+          <div class="agency-header">
+            <div class="agency-logo">
+              {{ agency.name|slice:":1"|upper }}
+            </div>
+            <span class="agency-badge {% if agency.verified %}badge-verified{% else %}badge-pending{% endif %}">
+              {% if agency.verified %}✓ Vérifiée{% else %}⏳ En attente{% endif %}
+            </span>
+          </div>
+
+          <h3 class="agency-name">{{ agency.name }}</h3>
+
+          <div class="agency-info">
+            <div class="agency-info-row">
+              <i class="fa-solid fa-location-dot"></i>
+              <span>{{ agency.city|default:"Non spécifiée" }}</span>
+            </div>
+            <div class="agency-info-row">
+              <i class="fa-solid fa-phone"></i>
+              <span>{{ agency.phone|default:"Non renseigné" }}</span>
+            </div>
+            <div class="agency-info-row">
+              <i class="fa-solid fa-envelope"></i>
+              <span>{{ agency.email|default:"Non renseigné" }}</span>
+            </div>
+          </div>
+
+          <div class="agency-actions">
+            <a href="{% url 'dashboard_agency' agency.id %}" class="btn-action btn-view">
+              👁️ Voir
+            </a>
+            {% if not agency.verified %}
+              <a href="{% url 'agency_verify' agency.slug %}" class="btn-action btn-verify">
+                ✓ Vérifier
+              </a>
+            {% endif %}
+            <a href="{% url 'cockpit_admin:agencies_agency_change' agency.id %}" class="btn-action btn-edit">
+              ✏️ Modifier
+            </a>
+          </div>
+        </div>
+      {% endfor %}
+    </div>
+
+    <!-- Table View -->
+    <div id="tableView" class="agencies-table-container" style="display: none;">
+      <table class="agencies-table">
+        <thead>
+          <tr>
+            <th>Agence</th>
+            <th>Ville</th>
+            <th>Contact</th>
+            <th>Statut</th>
+            <th>Actions</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for agency in agencies %}
+            <tr>
+              <td>
+                <div class="table-agency-cell">
+                  <div class="table-logo">
+                    {{ agency.name|slice:":1"|upper }}
+                  </div>
+                  <strong>{{ agency.name }}</strong>
+                </div>
+              </td>
+              <td>{{ agency.city|default:"—" }}</td>
+              <td>{{ agency.phone|default:"—" }}</td>
+              <td>
+                <span class="agency-badge {% if agency.verified %}badge-verified{% else %}badge-pending{% endif %}">
+                  {% if agency.verified %}✓ Vérifiée{% else %}⏳ En attente{% endif %}
+                </span>
+              </td>
+              <td>
+                <div style="display: flex; gap: 0.5rem;">
+                  <a href="{% url 'dashboard_agency' agency.id %}" class="btn-action btn-view" style="padding: 0.4rem 0.6rem; font-size: 0.8rem;">👁️</a>
+                  {% if not agency.verified %}
+                    <a href="{% url 'agency_verify' agency.slug %}" class="btn-action btn-verify" style="padding: 0.4rem 0.6rem; font-size: 0.8rem;">✓</a>
+                  {% endif %}
+                  <a href="{% url 'cockpit_admin:agencies_agency_change' agency.id %}" class="btn-action btn-edit" style="padding: 0.4rem 0.6rem; font-size: 0.8rem;">✏️</a>
+                </div>
+              </td>
+            </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+
+  {% else %}
+    <!-- Empty State -->
+    <div class="empty-state">
+      <div class="empty-icon">🏢</div>
+      <h2 class="empty-title">Aucune agence inscrite</h2>
+      <p class="empty-text">Commencez par créer votre première agence pour développer la plateforme.</p>
+      <a href="{% url 'agency_create' %}" class="btn btn-primary" style="padding: 0.75rem 1.5rem; font-size: 1rem;">
+        ➕ Créer la première agence
+      </a>
+    </div>
+  {% endif %}
+
+</div>
+
+<script>
+  // View Switching
+  function switchView(view) {
+    const gridView = document.getElementById('gridView');
+    const tableView = document.getElementById('tableView');
+    const buttons = document.querySelectorAll('.view-btn');
+
+    buttons.forEach(btn => btn.classList.remove('active'));
+
+    if (view === 'grid') {
+      gridView.style.display = 'grid';
+      tableView.style.display = 'none';
+      buttons[0].classList.add('active');
+    } else {
+      gridView.style.display = 'none';
+      tableView.style.display = 'block';
+      buttons[1].classList.add('active');
+    }
+  }
+</script>
+
 {% endblock %}

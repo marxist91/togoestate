@@ -1,11 +1,688 @@
 {% extends "base.html" %}
 {% block content %}
-<h2>Mes annonces</h2>
-<ul>
-  {% for l in listings %}
-    <li>{{ l.title }} – {{ l.price }} {{ l.currency }}</li>
-  {% empty %}
-    <li>Aucune annonce trouvée.</li>
-  {% endfor %}
-</ul>
+
+<style>
+  :root {
+    --primary: #1976D2;
+    --secondary: #FF9800;
+    --success: #2E7D32;
+    --warning: #EF6C00;
+    --danger: #D32F2F;
+  }
+
+  /* Header */
+  .listings-header {
+    background: linear-gradient(135deg, var(--primary) 0%, #1565C0 100%);
+    color: white;
+    padding: 2rem;
+    border-radius: 12px;
+    margin-bottom: 2rem;
+    box-shadow: 0 4px 20px rgba(25, 118, 210, 0.2);
+  }
+
+  .header-content {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 1.5rem;
+  }
+
+  .header-info h1 {
+    font-size: 2rem;
+    font-weight: 700;
+    margin: 0 0 0.5rem 0;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+  }
+
+  .header-subtitle {
+    font-size: 1rem;
+    opacity: 0.9;
+    margin: 0;
+  }
+
+  .header-actions {
+    display: flex;
+    gap: 0.75rem;
+    flex-wrap: wrap;
+  }
+
+  .btn-header {
+    padding: 0.6rem 1.2rem;
+    background: rgba(255, 255, 255, 0.2);
+    color: white;
+    border-radius: 8px;
+    text-decoration: none;
+    font-weight: 600;
+    backdrop-filter: blur(10px);
+    border: 2px solid rgba(255, 255, 255, 0.3);
+    transition: all 0.3s;
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5rem;
+  }
+
+  .btn-header:hover {
+    background: white;
+    color: var(--primary);
+    transform: translateY(-2px);
+  }
+
+  /* Filters */
+  .filters-section {
+    background: white;
+    padding: 1.5rem;
+    border-radius: 12px;
+    margin-bottom: 2rem;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+  }
+
+  .filters-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+    gap: 1rem;
+  }
+
+  .filter-group {
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+  }
+
+  .filter-group label {
+    font-size: 0.9rem;
+    font-weight: 600;
+    color: #495057;
+  }
+
+  .filter-group select,
+  .filter-group input {
+    padding: 0.6rem;
+    border: 2px solid #e9ecef;
+    border-radius: 8px;
+    transition: all 0.3s;
+  }
+
+  .filter-group select:focus,
+  .filter-group input:focus {
+    outline: none;
+    border-color: var(--primary);
+  }
+
+  .filter-actions {
+    display: flex;
+    gap: 0.75rem;
+    margin-top: 1rem;
+  }
+
+  .btn {
+    padding: 0.6rem 1.2rem;
+    border-radius: 8px;
+    text-decoration: none;
+    font-weight: 600;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.5rem;
+    transition: all 0.3s;
+    border: none;
+    cursor: pointer;
+  }
+
+  .btn-primary {
+    background: var(--primary);
+    color: white;
+  }
+
+  .btn-primary:hover {
+    background: #1565C0;
+    transform: translateY(-2px);
+  }
+
+  .btn-secondary {
+    background: #6c757d;
+    color: white;
+  }
+
+  .btn-secondary:hover {
+    background: #5a6268;
+  }
+
+  /* Stats Bar */
+  .stats-bar {
+    display: flex;
+    gap: 1rem;
+    flex-wrap: wrap;
+    margin-bottom: 2rem;
+  }
+
+  .stat-chip {
+    background: white;
+    padding: 0.75rem 1.25rem;
+    border-radius: 8px;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+  }
+
+  .stat-chip-value {
+    font-size: 1.5rem;
+    font-weight: 700;
+    color: var(--primary);
+  }
+
+  .stat-chip-label {
+    font-size: 0.9rem;
+    color: #6c757d;
+  }
+
+  /* View Toggle */
+  .view-toggle {
+    display: flex;
+    gap: 0.5rem;
+    margin-bottom: 1.5rem;
+  }
+
+  .view-btn {
+    padding: 0.5rem 1rem;
+    background: white;
+    border: 2px solid #e9ecef;
+    border-radius: 8px;
+    cursor: pointer;
+    transition: all 0.3s;
+    font-weight: 600;
+    color: #6c757d;
+  }
+
+  .view-btn.active {
+    background: var(--primary);
+    border-color: var(--primary);
+    color: white;
+  }
+
+  .view-btn:hover:not(.active) {
+    border-color: var(--primary);
+  }
+
+  /* Grid View */
+  .listings-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
+    gap: 1.5rem;
+  }
+
+  .listing-card {
+    background: white;
+    border-radius: 12px;
+    overflow: hidden;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+    transition: all 0.3s;
+    position: relative;
+  }
+
+  .listing-card:hover {
+    transform: translateY(-8px);
+    box-shadow: 0 8px 24px rgba(0,0,0,0.15);
+  }
+
+  .listing-image {
+    width: 100%;
+    height: 200px;
+    object-fit: cover;
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: white;
+    font-size: 3rem;
+  }
+
+  .listing-status {
+    position: absolute;
+    top: 1rem;
+    right: 1rem;
+    padding: 0.4rem 0.8rem;
+    border-radius: 20px;
+    font-size: 0.8rem;
+    font-weight: 600;
+    backdrop-filter: blur(10px);
+  }
+
+  .status-published {
+    background: rgba(46, 125, 50, 0.9);
+    color: white;
+  }
+
+  .status-draft {
+    background: rgba(239, 108, 0, 0.9);
+    color: white;
+  }
+
+  .listing-body {
+    padding: 1.25rem;
+  }
+
+  .listing-title {
+    font-size: 1.2rem;
+    font-weight: 700;
+    color: #212529;
+    margin: 0 0 0.5rem 0;
+  }
+
+  .listing-details {
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+    margin-bottom: 1rem;
+  }
+
+  .listing-detail-row {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    color: #6c757d;
+    font-size: 0.9rem;
+  }
+
+  .listing-detail-row i {
+    width: 16px;
+    color: var(--primary);
+  }
+
+  .listing-price {
+    font-size: 1.5rem;
+    font-weight: 700;
+    color: var(--success);
+    margin: 0.75rem 0;
+  }
+
+  .listing-actions {
+    display: flex;
+    gap: 0.5rem;
+    padding-top: 1rem;
+    border-top: 1px solid #e9ecef;
+  }
+
+  .btn-action {
+    flex: 1;
+    padding: 0.5rem;
+    border-radius: 6px;
+    text-decoration: none;
+    font-weight: 600;
+    font-size: 0.85rem;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.3rem;
+    transition: all 0.3s;
+  }
+
+  .btn-view {
+    background: #E3F2FD;
+    color: var(--primary);
+  }
+
+  .btn-view:hover {
+    background: var(--primary);
+    color: white;
+  }
+
+  .btn-edit {
+    background: #FFF3E0;
+    color: var(--secondary);
+  }
+
+  .btn-edit:hover {
+    background: var(--secondary);
+    color: white;
+  }
+
+  .btn-delete {
+    background: #FFEBEE;
+    color: var(--danger);
+  }
+
+  .btn-delete:hover {
+    background: var(--danger);
+    color: white;
+  }
+
+  /* Table View */
+  .listings-table-container {
+    background: white;
+    border-radius: 12px;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+    overflow: hidden;
+  }
+
+  .listings-table {
+    width: 100%;
+    border-collapse: separate;
+    border-spacing: 0;
+  }
+
+  .listings-table thead {
+    background: #f8f9fa;
+  }
+
+  .listings-table th {
+    padding: 1rem;
+    text-align: left;
+    font-weight: 600;
+    color: #495057;
+    font-size: 0.9rem;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+  }
+
+  .listings-table td {
+    padding: 1rem;
+    border-top: 1px solid #e9ecef;
+  }
+
+  .listings-table tbody tr {
+    transition: all 0.3s;
+  }
+
+  .listings-table tbody tr:hover {
+    background: #f8f9fa;
+  }
+
+  /* Empty State */
+  .empty-state {
+    text-align: center;
+    padding: 4rem 2rem;
+    background: white;
+    border-radius: 12px;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+  }
+
+  .empty-icon {
+    font-size: 5rem;
+    margin-bottom: 1.5rem;
+    opacity: 0.3;
+  }
+
+  .empty-title {
+    font-size: 1.8rem;
+    font-weight: 700;
+    color: #212529;
+    margin: 0 0 0.75rem 0;
+  }
+
+  .empty-text {
+    font-size: 1.1rem;
+    color: #6c757d;
+    margin: 0 0 2rem 0;
+  }
+
+  .btn-large {
+    padding: 0.75rem 1.5rem;
+    font-size: 1rem;
+  }
+
+  /* Responsive */
+  @media (max-width: 768px) {
+    .header-content {
+      flex-direction: column;
+      align-items: flex-start;
+    }
+
+    .header-info h1 {
+      font-size: 1.5rem;
+    }
+
+    .header-actions {
+      width: 100%;
+    }
+
+    .btn-header {
+      flex: 1;
+      justify-content: center;
+    }
+
+    .filters-grid {
+      grid-template-columns: 1fr;
+    }
+
+    .stats-bar {
+      flex-direction: column;
+    }
+
+    .listings-grid {
+      grid-template-columns: 1fr;
+    }
+
+    .listings-table-container {
+      overflow-x: auto;
+    }
+
+    .listings-table {
+      font-size: 0.85rem;
+    }
+
+    .listings-table th,
+    .listings-table td {
+      padding: 0.75rem 0.5rem;
+    }
+  }
+</style>
+
+<div class="container-fluid">
+  
+  <!-- Header -->
+  <header class="listings-header">
+    <div class="header-content">
+      <div class="header-info">
+        <h1>📋 Mes annonces</h1>
+        <p class="header-subtitle">Gérez toutes vos annonces immobilières en un seul endroit</p>
+      </div>
+
+      <div class="header-actions">
+        <a href="{% url 'listing_create' %}" class="btn-header">
+          ➕ Nouvelle annonce
+        </a>
+        <a href="{% url 'dashboard_agency' user.agency.id %}" class="btn-header">
+          📊 Dashboard
+        </a>
+      </div>
+    </div>
+  </header>
+
+  <!-- Stats Bar -->
+  <div class="stats-bar">
+    <div class="stat-chip">
+      <span class="stat-chip-value">{{ listings|length }}</span>
+      <span class="stat-chip-label">Total</span>
+    </div>
+    <div class="stat-chip">
+      <span class="stat-chip-value" style="color: var(--success);">
+        {{ published_count }}
+      </span>
+      <span class="stat-chip-label">Publiées</span>
+    </div>
+    <div class="stat-chip">
+      <span class="stat-chip-value" style="color: var(--warning);">
+        {{ draft_count }}
+      </span>
+      <span class="stat-chip-label">Brouillons</span>
+    </div>
+  </div>
+
+  <!-- Filters (Optional - can be added if needed) -->
+  <!--
+  <div class="filters-section">
+    <form method="get">
+      <div class="filters-grid">
+        <div class="filter-group">
+          <label>Statut</label>
+          <select name="status">
+            <option value="">Tous</option>
+            <option value="published">Publiées</option>
+            <option value="draft">Brouillons</option>
+          </select>
+        </div>
+        <div class="filter-group">
+          <label>Type</label>
+          <select name="type">
+            <option value="">Tous</option>
+            <option value="vente">Vente</option>
+            <option value="location">Location</option>
+          </select>
+        </div>
+        <div class="filter-group">
+          <label>Rechercher</label>
+          <input type="text" name="search" placeholder="Titre, ville...">
+        </div>
+      </div>
+      <div class="filter-actions">
+        <button type="submit" class="btn btn-primary">🔍 Filtrer</button>
+        <a href="{% url 'manage_listings' %}" class="btn btn-secondary">🔄 Réinitialiser</a>
+      </div>
+    </form>
+  </div>
+  -->
+
+  {% if listings %}
+    <!-- View Toggle -->
+    <div class="view-toggle">
+      <button class="view-btn active" onclick="switchView('grid')">
+        <i class="fa-solid fa-grip"></i> Grille
+      </button>
+      <button class="view-btn" onclick="switchView('table')">
+        <i class="fa-solid fa-table"></i> Tableau
+      </button>
+    </div>
+
+    <!-- Grid View -->
+    <div id="gridView" class="listings-grid">
+      {% for listing in listings %}
+        <div class="listing-card">
+          <div class="listing-image">
+            {% if listing.photos.exists %}
+              <img src="{{ listing.photos.first.image.url }}" alt="{{ listing.title }}" style="width: 100%; height: 100%; object-fit: cover;">
+            {% else %}
+              🏠
+            {% endif %}
+          </div>
+          
+          <span class="listing-status {% if listing.published %}status-published{% else %}status-draft{% endif %}">
+            {% if listing.published %}✓ Publiée{% else %}📝 Brouillon{% endif %}
+          </span>
+
+          <div class="listing-body">
+            <h3 class="listing-title">{{ listing.title }}</h3>
+            
+            <div class="listing-details">
+              <div class="listing-detail-row">
+                <i class="fa-solid fa-tag"></i>
+                <span>{{ listing.category }}</span>
+              </div>
+              <div class="listing-detail-row">
+                <i class="fa-solid fa-home"></i>
+                <span>{{ listing.listing_type }}</span>
+              </div>
+              <div class="listing-detail-row">
+                <i class="fa-solid fa-location-dot"></i>
+                <span>{{ listing.city }}</span>
+              </div>
+            </div>
+
+            <div class="listing-price">
+              {{ listing.price }} {{ listing.currency }}
+            </div>
+
+            <div class="listing-actions">
+              <a href="{% url 'listing_detail' listing.slug %}" class="btn-action btn-view">
+                👁️ Voir
+              </a>
+              <a href="{% url 'cockpit_admin:listings_listing_change' listing.pk %}" class="btn-action btn-edit">
+                ✏️ Modifier
+              </a>
+              <a href="{% url 'cockpit_admin:listings_listing_delete' listing.pk %}" class="btn-action btn-delete" onclick="return confirm('Êtes-vous sûr de vouloir supprimer cette annonce ?')">
+                🗑️ Supprimer
+              </a>
+            </div>
+          </div>
+        </div>
+      {% endfor %}
+    </div>
+
+    <!-- Table View -->
+    <div id="tableView" class="listings-table-container" style="display: none;">
+      <table class="listings-table">
+        <thead>
+          <tr>
+            <th>Titre</th>
+            <th>Type</th>
+            <th>Catégorie</th>
+            <th>Prix</th>
+            <th>Ville</th>
+            <th>Statut</th>
+            <th>Actions</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for listing in listings %}
+            <tr>
+              <td><strong>{{ listing.title }}</strong></td>
+              <td>{{ listing.listing_type }}</td>
+              <td>{{ listing.category }}</td>
+              <td style="color: var(--success); font-weight: 700;">{{ listing.price }} {{ listing.currency }}</td>
+              <td>{{ listing.city }}</td>
+              <td>
+                <span class="listing-status {% if listing.published %}status-published{% else %}status-draft{% endif %}" style="position: static;">
+                  {% if listing.published %}✓ Publiée{% else %}📝 Brouillon{% endif %}
+                </span>
+              </td>
+              <td>
+                <div style="display: flex; gap: 0.5rem;">
+                  <a href="{% url 'listing_detail' listing.slug %}" class="btn-action btn-view" style="padding: 0.4rem 0.6rem; font-size: 0.8rem;">👁️</a>
+                  <a href="{% url 'cockpit_admin:listings_listing_change' listing.pk %}" class="btn-action btn-edit" style="padding: 0.4rem 0.6rem; font-size: 0.8rem;">✏️</a>
+                  <a href="{% url 'cockpit_admin:listings_listing_delete' listing.pk %}" class="btn-action btn-delete" style="padding: 0.4rem 0.6rem; font-size: 0.8rem;" onclick="return confirm('Êtes-vous sûr ?')">🗑️</a>
+                </div>
+              </td>
+            </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+
+  {% else %}
+    <!-- Empty State -->
+    <div class="empty-state">
+      <div class="empty-icon">📋</div>
+      <h2 class="empty-title">Aucune annonce trouvée</h2>
+      <p class="empty-text">Commencez par créer votre première annonce pour la rendre visible sur la plateforme.</p>
+      <a href="{% url 'listing_create' %}" class="btn btn-primary btn-large">
+        ➕ Créer ma première annonce
+      </a>
+    </div>
+  {% endif %}
+
+</div>
+
+<script>
+  // View Switching
+  function switchView(view) {
+    const gridView = document.getElementById('gridView');
+    const tableView = document.getElementById('tableView');
+    const buttons = document.querySelectorAll('.view-btn');
+
+    buttons.forEach(btn => btn.classList.remove('active'));
+
+    if (view === 'grid') {
+      gridView.style.display = 'grid';
+      tableView.style.display = 'none';
+      buttons[0].classList.add('active');
+    } else {
+      gridView.style.display = 'none';
+      tableView.style.display = 'block';
+      buttons[1].classList.add('active');
+    }
+  }
+</script>
+
 {% endblock %}

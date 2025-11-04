@@ -1,0 +1,42 @@
+[
+  {
+    "model": "listings.listingphoto",
+    "pk": 1,
+    "fields": {
+      "listing": 4,
+      "image": "listings/photos/villa_moderne.jpg",
+      "is_cover": true,
+      "order": 1
+    }
+  },
+  {
+    "model": "listings.listingphoto",
+    "pk": 2,
+    "fields": {
+      "listing": 4,
+      "image": "listings/photos/villa_salon.jpg",
+      "is_cover": false,
+      "order": 2
+    }
+  },
+  {
+    "model": "listings.listingphoto",
+    "pk": 3,
+    "fields": {
+      "listing": 5,
+      "image": "listings/photos/appartement_exterieur.jpg",
+      "is_cover": true,
+      "order": 1
+    }
+  },
+  {
+    "model": "listings.listingphoto",
+    "pk": 4,
+    "fields": {
+      "listing": 5,
+      "image": "listings/photos/appartement_salon.jpg",
+      "is_cover": false,
+      "order": 2
+    }
+  }
+]

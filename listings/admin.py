@@ -1,180 +1,289 @@
 from django.contrib import admin
 from django.contrib.auth.models import Group
 from django.contrib.auth.admin import GroupAdmin
-from django.urls import path, reverse
-from django.http import JsonResponse
-from django.template.response import TemplateResponse
-from django.shortcuts import redirect
-from django.db.models import Count
+from django.utils.html import format_html
+from django.core.exceptions import ValidationError
+from django.forms.models import BaseInlineFormSet
+from adminsortable2.admin import SortableAdminBase, SortableInlineAdminMixin, CustomInlineFormSetMixin
 
-from .models import Listing, ListingPhoto, Agency
+from .models import Listing, ListingPhoto
 from django.contrib.auth import get_user_model
-from django.db.models.functions import TruncMonth
+from core.admin_site import admin_site
 
-# Import de ton CustomUserAdmin défini dans accounts/admin.py
-from accounts.admin import CustomUserAdmin
+# 👉 Import des filtres hiérarchiques
+from agencies.filters import RegionListFilter, DistrictListFilter, CityListFilter
 
 User = get_user_model()
 
 
-# === Admin cockpit personnalisé ===
-class AuditAdminSite(admin.AdminSite):
-    site_header = "Cockpit Admin"
+# === Inline avec aperçu et validation is_cover ===
+class ListingPhotoInlineFormset(CustomInlineFormSetMixin, BaseInlineFormSet):
+    def __init__(self, *args, **kwargs):
+        # Remove arguments not accepted by BaseFormSet in Django 5.2
+        kwargs.pop('default_order_direction', None)
+        kwargs.pop('default_order_field', None)
+        super().__init__(*args, **kwargs)
+        # Set the default order field manually for Django 5.2 compatibility
+        if not hasattr(self, 'default_order_field') or self.default_order_field is None:
+            self.default_order_field = 'order'
+        if not hasattr(self, 'default_order_direction'):
+            self.default_order_direction = 0
 
-    def get_urls(self):
-        urls = super().get_urls()
-        custom_urls = [
-            path("mes-annonces/", self.admin_view(self.mes_annonces), name="mes-annonces"),
-            path("audit-report/", self.admin_view(self.audit_report), name="audit-report"),
-        ]
-        return custom_urls + urls
-
-    def mes_annonces(self, request):
-        # Redirige vers la liste des annonces (ListingAdmin changelist)
-        url = reverse("cockpit_admin:listings_listing_changelist", current_app=self.name)
-        return redirect(url)
-
-    def audit_report(self, request):
-        total = Listing.objects.count()
-        missing_city = Listing.objects.filter(city__isnull=True).values("id")
-        missing_district = Listing.objects.filter(district__isnull=True).values("id")
-
-        report = {
-            "audit": "listings",
-            "total_annonces": total,
-            "missing_city_count": missing_city.count(),
-            "missing_district_count": missing_district.count(),
-            "missing_city_ids": [obj["id"] for obj in missing_city],
-            "missing_district_ids": [obj["id"] for obj in missing_district],
-        }
-
-        if request.headers.get("X-Requested-With") == "XMLHttpRequest":
-            return JsonResponse(report)
-
-        context = dict(
-            self.each_context(request),
-            title="Audit qualité des données",
-            report=report,
-        )
-        return TemplateResponse(request, "admin/audit_report.html", context)
+    def clean(self):
+        super().clean()
+        cover_count = 0
+        for form in self.forms:
+            if not hasattr(form, "cleaned_data"):
+                continue
+            if form.cleaned_data.get("DELETE"):
+                continue
+            if form.cleaned_data.get("is_cover"):
+                cover_count += 1
+        if cover_count > 1:
+            raise ValidationError("Une seule photo peut être définie comme couverture.")
 
 
-# Remplace l’admin par défaut
-admin_site = AuditAdminSite(name="cockpit_admin")
-
-
-# === Inline pour photos ===
-class ListingPhotoInline(admin.TabularInline):
+class ListingPhotoInline(SortableInlineAdminMixin, admin.StackedInline):
     model = ListingPhoto
     extra = 1
+    formset = ListingPhotoInlineFormset
+    fields = ("image", "preview", "is_cover", "order")
+    readonly_fields = ("preview",)
+
+    def preview(self, obj):
+        if obj.image:
+            return format_html(
+                '<img src="{}" style="max-height:120px; border:1px solid #ccc;"/>',
+                obj.image.url,
+            )
+        return "—"
+    preview.short_description = "Aperçu"
+
+    def has_add_permission(self, request, obj=None):
+        """Tous peuvent ajouter des photos à leurs annonces"""
+        return True
+
+    def has_change_permission(self, request, obj=None):
+        """Tous peuvent modifier les photos de leurs annonces"""
+        return True
+
+    def has_delete_permission(self, request, obj=None):
+        """Tous peuvent supprimer les photos de leurs annonces"""
+        return True
 
 
-# === Admin Listing ===
+# === Admin Listing cockpit‑ready ===
 @admin.register(Listing, site=admin_site)
-class ListingAdmin(admin.ModelAdmin):
-    change_list_template = "admin/listings/listing/change_list.html"  # 👈 pour injecter tes liens custom
+class ListingAdmin(SortableAdminBase, admin.ModelAdmin):
     list_display = (
         "title", "agency", "owner", "category", "listing_type",
-        "price", "city", "published", "created_at"
+        "price", "city", "get_district", "get_region",
+        "published", "created_at"
     )
-    list_filter = ("agency", "category", "listing_type", "published", "city")
-    search_fields = ("title", "city__name", "agency__name", "owner__username")
+    list_filter = (
+        "agency", "category", "listing_type", "published",
+        RegionListFilter, DistrictListFilter, CityListFilter
+    )
+    search_fields = (
+        "title", "city__name", "city__district__name",
+        "city__district__region__name", "agency__name", "owner__username"
+    )
     prepopulated_fields = {"slug": ("title",)}
     inlines = [ListingPhotoInline]
-    
-    def changelist_view(self, request, extra_context=None):
-        qs = self.get_queryset(request)
-        stats = {
-            "total": qs.count(),
-            "published": qs.filter(published=True).count(),
-            "unpublished": qs.filter(published=False).count(),
-        }
-        
-                # Stats par agence (nom + nombre d'annonces)
-        agency_stats = (
-            qs.values("agency__name")
-              .annotate(total=Count("id"))
-              .order_by("agency__name")
-        )
-        
-        # Timeline par mois (création)
-        timeline_stats = (
-            qs.annotate(month=TruncMonth("created_at"))
-              .values("month")
-              .annotate(total=Count("id"))
-              .order_by("month")
-        )
 
+    # Helpers cockpit-ready
+    def get_district(self, obj):
+        return obj.city.district if obj.city else None
+    get_district.short_description = "District"
+    get_district.admin_order_field = "city__district__name"
 
+    def get_region(self, obj):
+        return obj.city.district.region if obj.city else None
+    get_region.short_description = "Région"
+    get_region.admin_order_field = "city__district__region__name"
 
-        extra_context = extra_context or {}
-        extra_context["stats"] = stats
-        extra_context["agency_stats"] = list(agency_stats)
-        extra_context["timeline_stats"] = list(timeline_stats)
-
-
-        return super().changelist_view(request, extra_context=extra_context)
-
-
+    # === Helper pour vérifier permissions ===
     def _call_or_bool(self, obj, attr_name):
         attr = getattr(obj, attr_name, None)
         return attr() if callable(attr) else bool(attr)
 
+    # === QuerySet filtré selon le rôle ===
     def get_queryset(self, request):
         qs = super().get_queryset(request)
         user = request.user
+        
+        # Superuser / Platform Admin = tout voir
         if self._call_or_bool(user, "is_platform_admin"):
             return qs
+        
+        # Agency Admin = voir toute son agence
         if self._call_or_bool(user, "is_agency_admin"):
             return qs.filter(agency=user.agency)
+        
+        # Agent = voir toute son agence
         if self._call_or_bool(user, "is_agent"):
-            return qs.filter(owner=user)
+            return qs.filter(agency=user.agency)
+        
         return qs.none()
 
+    # === Permissions : Tous peuvent créer ===
+    def has_add_permission(self, request):
+        """Platform Admin, Agency Admin et Agent peuvent créer"""
+        return (
+            self._call_or_bool(request.user, "is_platform_admin")
+            or self._call_or_bool(request.user, "is_agency_admin")
+            or self._call_or_bool(request.user, "is_agent")
+        )
+
+    def has_change_permission(self, request, obj=None):
+        """
+        - Platform Admin = tout modifier
+        - Agency Admin = modifier toute son agence
+        - Agent = modifier uniquement SES annonces
+        """
+        user = request.user
+        
+        # Platform Admin = tout modifier
+        if self._call_or_bool(user, "is_platform_admin"):
+            return True
+        
+        # Agency Admin = modifier toute son agence
+        if self._call_or_bool(user, "is_agency_admin"):
+            return obj is None or obj.agency == user.agency
+        
+        # Agent = modifier uniquement ses propres annonces
+        if self._call_or_bool(user, "is_agent"):
+            return obj is None or obj.owner == user
+        
+        return False
+
+    def has_delete_permission(self, request, obj=None):
+        """
+        - Platform Admin = tout supprimer
+        - Agency Admin = supprimer toute son agence
+        - Agent = supprimer uniquement SES annonces
+        """
+        user = request.user
+        
+        # Platform Admin = tout supprimer
+        if self._call_or_bool(user, "is_platform_admin"):
+            return True
+        
+        # Agency Admin = supprimer toute son agence
+        if self._call_or_bool(user, "is_agency_admin"):
+            return obj is None or obj.agency == user.agency
+        
+        # Agent = supprimer uniquement ses propres annonces
+        if self._call_or_bool(user, "is_agent"):
+            return obj is None or obj.owner == user
+        
+        return False
+
+    # === Readonly fields : agents ne peuvent pas changer agency/owner ===
+    def get_readonly_fields(self, request, obj=None):
+        """Agents ne peuvent pas modifier agency et owner"""
+        user = request.user
+        readonly = list(self.readonly_fields)
+        
+        # Agent = agency et owner en readonly
+        if self._call_or_bool(user, "is_agent"):
+            if "agency" not in readonly:
+                readonly.append("agency")
+            if "owner" not in readonly:
+                readonly.append("owner")
+        
+        return readonly
+
+    # === Form : masquer agency/owner pour non-superusers ===
+    def get_form(self, request, obj=None, **kwargs):
+        form = super().get_form(request, obj, **kwargs)
+        user = request.user
+        
+        # Seul Platform Admin voit agency/owner
+        if not self._call_or_bool(user, "is_platform_admin"):
+            form.base_fields.pop("agency", None)
+            form.base_fields.pop("owner", None)
+        
+        return form
+
+    # === Valeurs par défaut selon le rôle ===
+    def get_changeform_initial_data(self, request):
+        data = super().get_changeform_initial_data(request)
+        user = request.user
+        
+        # Agency Admin = pré-remplir son agence et lui comme owner
+        if self._call_or_bool(user, "is_agency_admin"):
+            data["agency"] = user.agency_id
+            data["owner"] = user.id
+        
+        # Agent = pré-remplir son agence et lui comme owner
+        if self._call_or_bool(user, "is_agent"):
+            data["agency"] = user.agency_id
+            data["owner"] = user.id
+        
+        return data
+
+    # === Sauvegarde avec assignation auto ===
     def save_model(self, request, obj, form, change):
         user = request.user
-        if not self._call_or_bool(user, "is_platform_admin"):
-            if hasattr(user, "agency"):
-                obj.agency = user.agency
-            if not getattr(obj, "owner_id", None):
+        
+        # Création : assigner automatiquement agency et owner
+        if not obj.pk:
+            if not obj.owner_id:
                 obj.owner = user
+            if not obj.agency_id and hasattr(user, "agency"):
+                obj.agency = user.agency
+        
         super().save_model(request, obj, form, change)
 
 
 # === Admin ListingPhoto ===
 @admin.register(ListingPhoto, site=admin_site)
 class ListingPhotoAdmin(admin.ModelAdmin):
-    list_display = ("listing", "image_url", "is_cover", "order")
-
-
-# === Admin Agency ===
-@admin.register(Agency, site=admin_site)
-class AgencyAdmin(admin.ModelAdmin):
-    list_display = ("name", "created_at",)
-    list_filter = ("created_at",)
-    search_fields = ("name", "address", "email")
-    ordering = ("-created_at",)
-
-    def change_view(self, request, object_id, form_url="", extra_context=None):
-        agency = self.get_object(request, object_id)
-
-        # Stats liées à l’agence
-        users_count = agency.users.count()
-        listings_total = agency.listings.count()
-        listings_published = agency.listings.filter(published=True).count()
-        listings_unpublished = listings_total - listings_published
-
-        stats = {
-            "users_count": users_count,
-            "listings_total": listings_total,
-            "listings_published": listings_published,
-            "listings_unpublished": listings_unpublished,
-        }
-
-        extra_context = extra_context or {}
-        extra_context["stats"] = stats
-
-        return super().change_view(request, object_id, form_url, extra_context=extra_context)
+    list_display = ("listing", "image", "is_cover", "order")
+    list_filter = ("is_cover", "listing__agency")
+    search_fields = ("listing__title",)
+    
+    def get_queryset(self, request):
+        qs = super().get_queryset(request)
+        user = request.user
+        
+        # Platform Admin = tout voir
+        if self._call_or_bool(user, "is_platform_admin"):
+            return qs
+        
+        # Agency Admin = voir son agence
+        if self._call_or_bool(user, "is_agency_admin"):
+            return qs.filter(listing__agency=user.agency)
+        
+        # Agent = voir son agence
+        if self._call_or_bool(user, "is_agent"):
+            return qs.filter(listing__agency=user.agency)
+        
+        return qs.none()
+    
+    def has_change_permission(self, request, obj=None):
+        """Agent peut modifier les photos de ses annonces"""
+        user = request.user
+        
+        if self._call_or_bool(user, "is_platform_admin"):
+            return True
+        
+        if self._call_or_bool(user, "is_agency_admin"):
+            return obj is None or obj.listing.agency == user.agency
+        
+        if self._call_or_bool(user, "is_agent"):
+            return obj is None or obj.listing.owner == user
+        
+        return False
+    
+    def has_delete_permission(self, request, obj=None):
+        """Agent peut supprimer les photos de ses annonces"""
+        return self.has_change_permission(request, obj)
+    
+    def _call_or_bool(self, obj, attr_name):
+        attr = getattr(obj, attr_name, None)
+        return attr() if callable(attr) else bool(attr)
 
 
 # === Nettoyage et réenregistrement ===
@@ -187,9 +296,6 @@ try:
     admin_site.unregister(Group)
 except admin.sites.NotRegistered:
     pass
-
-# Réenregistre User avec ton CustomUserAdmin
-admin_site.register(User, CustomUserAdmin)
 
 # Réenregistre Group avec GroupAdmin
 admin_site.register(Group, GroupAdmin)

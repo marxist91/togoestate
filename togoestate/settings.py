@@ -29,7 +29,7 @@ SECRET_KEY = 'django-insecure-%!h47losqon6s_x-o68ayeco!nqez^zz_@35j^5=bm1z#tddfp
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = True
 
-ALLOWED_HOSTS = []
+ALLOWED_HOSTS = ['localhost', '127.0.0.1', 'testserver']
 
 
 # Application definition
@@ -43,13 +43,32 @@ INSTALLED_APPS = [
     'django.contrib.staticfiles',
     'accounts',
     'listings',
+    'favorites',
+    'saved_searches',
+    'notifications',
     'rest_framework',
+    'django_filters',
+    "agencies",
+    "core",
     'locations',
+    "adminsortable2",
 
 ]
+REST_FRAMEWORK = {
+    "DEFAULT_PAGINATION_CLASS": "listings.pagination.MixedPagination",
+    "PAGE_SIZE": 10,
+
+    'DEFAULT_FILTER_BACKENDS': ['django_filters.rest_framework.DjangoFilterBackend']
+}
+# Configuration spécifique aux tests
+# (pytest-django utilise la DB de test automatiquement)
+TEST_RUNNER = "django.test.runner.DiscoverRunner"
 
 
 AUTH_USER_MODEL = 'accounts.User'
+MEDIA_URL = '/media/'
+MEDIA_ROOT = BASE_DIR / 'media'
+
 
 MIDDLEWARE = [
     'django.middleware.security.SecurityMiddleware',

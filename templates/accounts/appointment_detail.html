@@ -1,0 +1,314 @@
+{% extends "base.html" %}
+{% load static %}
+
+{% block content %}
+<div class="bg-gray-50 min-h-screen py-8">
+    <div class="max-w-7xl mx-auto px-4">
+        
+        <!-- Breadcrumb -->
+        <div class="text-sm text-gray-600 mb-6">
+            <a href="{% url 'home' %}" class="hover:text-blue-600">Accueil</a>
+            <span class="mx-2">/</span>
+            <a href="{% url 'appointments_list' %}" class="hover:text-blue-600">Rendez-vous</a>
+            <span class="mx-2">/</span>
+            <span class="text-gray-900 font-medium">RDV-{{ appointment.id }}</span>
+        </div>
+
+        <!-- Header -->
+        <div class="bg-white rounded-lg shadow-sm p-6 mb-6">
+            <div class="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4">
+                <div>
+                    <div class="flex items-center gap-3 mb-2">
+                        <h1 class="text-3xl font-bold text-gray-900">Rendez-vous #{{ appointment.id }}</h1>
+                        <span class="px-3 py-1 rounded-full text-sm font-semibold
+                            {% if appointment.status == 'pending' %}bg-yellow-100 text-yellow-800{% endif %}
+                            {% if appointment.status == 'confirmed' %}bg-green-100 text-green-800{% endif %}
+                            {% if appointment.status == 'cancelled' %}bg-red-100 text-red-800{% endif %}
+                            {% if appointment.status == 'completed' %}bg-blue-100 text-blue-800{% endif %}">
+                            {{ appointment.get_status_display }}
+                        </span>
+                    </div>
+                    <p class="text-gray-600 text-lg">📅 {{ appointment.scheduled_date|date:"l d F Y à H:i" }}</p>
+                </div>
+                <div class="flex gap-3">
+                    <a href="{% url 'appointments_list' %}" 
+                       class="px-4 py-2 border border-gray-300 rounded-lg text-gray-700 hover:bg-gray-50 font-medium">
+                        ← Retour
+                    </a>
+                    <a href="{% url 'listing_detail' appointment.listing.slug %}" 
+                       class="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 font-medium">
+                        Voir le bien →
+                    </a>
+                </div>
+            </div>
+        </div>
+
+        <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+            
+            <!-- Colonne principale -->
+            <div class="lg:col-span-2 space-y-6">
+                
+                <!-- Propriété -->
+                <div class="bg-white rounded-lg shadow-sm overflow-hidden">
+                    <div class="relative h-64 bg-gradient-to-r from-blue-500 to-purple-600">
+                        {% if appointment.listing.featured_image %}
+                            <img src="{{ appointment.listing.featured_image.url }}" 
+                                 alt="{{ appointment.listing.title }}" 
+                                 class="w-full h-full object-cover">
+                        {% endif %}
+                        <div class="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent"></div>
+                        <div class="absolute bottom-0 left-0 right-0 p-6 text-white">
+                            <h2 class="text-2xl font-bold mb-2">{{ appointment.listing.title }}</h2>
+                            <div class="flex items-center gap-4">
+                                <span>📍 {{ appointment.listing.city }}</span>
+                                <span class="font-semibold text-xl">💰 {{ appointment.listing.price }} {{ appointment.listing.currency }}</span>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="p-6 bg-gray-50">
+                        <div class="grid grid-cols-2 gap-4">
+                            <div>
+                                <p class="text-xs text-gray-500 font-semibold uppercase mb-1">Adresse</p>
+                                <p class="font-semibold text-gray-900">{{ appointment.listing.address }}</p>
+                            </div>
+                            <div>
+                                <p class="text-xs text-gray-500 font-semibold uppercase mb-1">Agence</p>
+                                <p class="font-semibold text-gray-900">{{ appointment.listing.agency.name }}</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Détails rendez-vous -->
+                <div class="bg-white rounded-lg shadow-sm p-6">
+                    <h3 class="text-2xl font-bold text-gray-900 mb-6 pb-3 border-b-2 border-blue-600">
+                        📅 Détails du rendez-vous
+                    </h3>
+                    
+                    <div class="grid grid-cols-2 gap-6">
+                        <div>
+                            <p class="text-xs text-gray-500 font-semibold uppercase mb-1">Date</p>
+                            <p class="text-xl font-bold text-gray-900">{{ appointment.scheduled_date|date:"d/m/Y" }}</p>
+                        </div>
+                        <div>
+                            <p class="text-xs text-gray-500 font-semibold uppercase mb-1">Heure</p>
+                            <p class="text-xl font-bold text-blue-600">⏰ {{ appointment.scheduled_date|date:"H:i" }}</p>
+                        </div>
+                        <div>
+                            <p class="text-xs text-gray-500 font-semibold uppercase mb-1">Durée</p>
+                            <p class="text-lg font-bold text-gray-900">{{ appointment.duration_minutes }} minutes</p>
+                        </div>
+                        <div>
+                            <p class="text-xs text-gray-500 font-semibold uppercase mb-1">Créé le</p>
+                            <p class="font-medium text-gray-700">{{ appointment.created_at|date:"d/m/Y H:i" }}</p>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Notes -->
+                {% if appointment.notes %}
+                <div class="bg-yellow-50 border-l-4 border-yellow-400 rounded-lg p-6">
+                    <h3 class="text-xl font-bold text-gray-900 mb-3">
+                        📝 Notes importantes
+                    </h3>
+                    <p class="text-gray-700 leading-relaxed">{{ appointment.notes }}</p>
+                </div>
+                {% endif %}
+
+                <!-- Actions gestion -->
+                {% if user == appointment.agent or user.is_agency_admin %}
+                    {% if appointment.can_be_modified %}
+                    <div class="bg-white rounded-lg shadow-sm p-6">
+                        <h3 class="text-xl font-bold text-gray-900 mb-4 pb-3 border-b">
+                            ⚙️ Actions de gestion
+                        </h3>
+                        <div class="flex flex-wrap gap-3">
+                            {% if appointment.status == 'pending' %}
+                                <a href="{% url 'appointment_update_status' appointment.id 'confirmed' %}" 
+                                   class="flex-1 min-w-[200px] bg-green-500 hover:bg-green-600 text-white px-6 py-3 rounded-lg font-bold text-center">
+                                    ✓ Confirmer le rendez-vous
+                                </a>
+                                <a href="{% url 'appointment_update_status' appointment.id 'cancelled' %}" 
+                                   onclick="return confirm('Annuler ce rendez-vous ?')"
+                                   class="flex-1 min-w-[200px] bg-red-500 hover:bg-red-600 text-white px-6 py-3 rounded-lg font-bold text-center">
+                                    ✕ Annuler le rendez-vous
+                                </a>
+                            {% endif %}
+                            
+                            {% if appointment.status == 'confirmed' %}
+                                <a href="{% url 'appointment_update_status' appointment.id 'completed' %}" 
+                                   class="flex-1 min-w-[200px] bg-blue-500 hover:bg-blue-600 text-white px-6 py-3 rounded-lg font-bold text-center">
+                                    ✓ Marquer comme terminé
+                                </a>
+                                <a href="{% url 'appointment_update_status' appointment.id 'cancelled' %}" 
+                                   onclick="return confirm('Annuler ce rendez-vous ?')"
+                                   class="flex-1 min-w-[200px] bg-gray-500 hover:bg-gray-600 text-white px-6 py-3 rounded-lg font-bold text-center">
+                                    ✕ Annuler
+                                </a>
+                            {% endif %}
+                        </div>
+                    </div>
+                    {% endif %}
+                {% endif %}
+
+            </div>
+
+            <!-- Sidebar -->
+            <div class="space-y-6">
+                
+                <!-- Client -->
+                <div class="bg-white rounded-lg shadow-sm p-6">
+                    <div class="flex items-center gap-3 mb-5 pb-4 border-b-2 border-green-500">
+                        <div class="w-14 h-14 bg-green-500 rounded-full flex items-center justify-center text-white font-bold text-2xl">
+                            {{ appointment.customer.get_full_name|slice:":1"|upper }}
+                        </div>
+                        <div>
+                            <h3 class="font-bold text-gray-900 text-xl">👤 Client</h3>
+                            <p class="text-sm text-gray-500">Demandeur</p>
+                        </div>
+                    </div>
+                    
+                    <div class="space-y-4">
+                        <div>
+                            <p class="text-xs text-gray-500 font-semibold uppercase mb-1">Nom complet</p>
+                            <p class="font-bold text-gray-900">{{ appointment.customer.get_full_name }}</p>
+                        </div>
+                        
+                        <div>
+                            <p class="text-xs text-gray-500 font-semibold uppercase mb-1">Email</p>
+                            <a href="mailto:{{ appointment.customer.email }}" 
+                               class="text-blue-600 hover:text-blue-700 font-medium break-all">
+                                📧 {{ appointment.customer.email }}
+                            </a>
+                        </div>
+                        
+                        <div>
+                            <p class="text-xs text-gray-500 font-semibold uppercase mb-1">Téléphone</p>
+                            {% if appointment.customer.phone %}
+                                <a href="tel:{{ appointment.customer.phone }}" 
+                                   class="text-blue-600 hover:text-blue-700 font-medium">
+                                    📞 {{ appointment.customer.phone }}
+                                </a>
+                            {% else %}
+                                <p class="text-gray-400 italic">Non renseigné</p>
+                            {% endif %}
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Agent -->
+                <div class="bg-white rounded-lg shadow-sm p-6">
+                    <div class="flex items-center gap-3 mb-5 pb-4 border-b-2 border-blue-500">
+                        <div class="w-14 h-14 bg-blue-500 rounded-full flex items-center justify-center text-white font-bold text-2xl">
+                            {{ appointment.agent.get_full_name|slice:":1"|upper }}
+                        </div>
+                        <div>
+                            <h3 class="font-bold text-gray-900 text-xl">👨‍💼 Agent</h3>
+                            <p class="text-sm text-gray-500">Responsable</p>
+                        </div>
+                    </div>
+                    
+                    <div class="space-y-4">
+                        <div>
+                            <p class="text-xs text-gray-500 font-semibold uppercase mb-1">Nom complet</p>
+                            <p class="font-bold text-gray-900">{{ appointment.agent.get_full_name }}</p>
+                        </div>
+                        
+                        <div>
+                            <p class="text-xs text-gray-500 font-semibold uppercase mb-1">Email</p>
+                            <a href="mailto:{{ appointment.agent.email }}" 
+                               class="text-blue-600 hover:text-blue-700 font-medium break-all">
+                                📧 {{ appointment.agent.email }}
+                            </a>
+                        </div>
+                        
+                        <div>
+                            <p class="text-xs text-gray-500 font-semibold uppercase mb-1">Téléphone</p>
+                            {% if appointment.agent.phone %}
+                                <a href="tel:{{ appointment.agent.phone }}" 
+                                   class="text-blue-600 hover:text-blue-700 font-medium">
+                                    📞 {{ appointment.agent.phone }}
+                                </a>
+                            {% else %}
+                                <p class="text-gray-400 italic">Non renseigné</p>
+                            {% endif %}
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Timeline -->
+                {% if appointment.status == 'completed' or appointment.status == 'cancelled' %}
+                <div class="bg-white rounded-lg shadow-sm p-6">
+                    <h3 class="font-bold text-gray-900 mb-5 text-xl pb-3 border-b">
+                        📜 Historique
+                    </h3>
+                    <div class="space-y-4">
+                        <div class="flex items-start gap-3 p-3 bg-blue-50 rounded-lg">
+                            <div class="w-8 h-8 bg-blue-500 rounded-full flex items-center justify-center text-white font-bold text-sm flex-shrink-0">
+                                1
+                            </div>
+                            <div>
+                                <p class="font-bold text-gray-900">Créé</p>
+                                <p class="text-sm text-gray-600">{{ appointment.created_at|date:"d/m/Y H:i" }}</p>
+                            </div>
+                        </div>
+                        
+                        {% if appointment.status == 'confirmed' or appointment.status == 'completed' %}
+                        <div class="flex items-start gap-3 p-3 bg-green-50 rounded-lg">
+                            <div class="w-8 h-8 bg-green-500 rounded-full flex items-center justify-center text-white font-bold text-sm flex-shrink-0">
+                                2
+                            </div>
+                            <div>
+                                <p class="font-bold text-gray-900">Confirmé</p>
+                                <p class="text-sm text-gray-600">Par l'agent</p>
+                            </div>
+                        </div>
+                        {% endif %}
+                        
+                        {% if appointment.status == 'completed' %}
+                        <div class="flex items-start gap-3 p-3 bg-blue-50 rounded-lg">
+                            <div class="w-8 h-8 bg-blue-600 rounded-full flex items-center justify-center text-white font-bold text-sm flex-shrink-0">
+                                ✓
+                            </div>
+                            <div>
+                                <p class="font-bold text-gray-900">Terminé</p>
+                                <p class="text-sm text-gray-600">{{ appointment.scheduled_date|date:"d/m/Y" }}</p>
+                            </div>
+                        </div>
+                        {% endif %}
+                        
+                        {% if appointment.status == 'cancelled' %}
+                        <div class="flex items-start gap-3 p-3 bg-red-50 rounded-lg">
+                            <div class="w-8 h-8 bg-red-500 rounded-full flex items-center justify-center text-white font-bold flex-shrink-0">
+                                ✕
+                            </div>
+                            <div>
+                                <p class="font-bold text-gray-900">Annulé</p>
+                                <p class="text-sm text-gray-600">{{ appointment.updated_at|date:"d/m/Y" }}</p>
+                            </div>
+                        </div>
+                        {% endif %}
+                    </div>
+                </div>
+                {% endif %}
+
+                <!-- Info -->
+                <div class="bg-blue-50 border-l-4 border-blue-500 rounded-lg p-5">
+                    <div class="flex items-start gap-3">
+                        <span class="text-3xl">ℹ️</span>
+                        <div class="text-sm text-blue-900">
+                            <p class="font-bold mb-2 text-base">Rappel important</p>
+                            <ul class="space-y-1">
+                                <li>✓ Arrivez 5 minutes avant</li>
+                                <li>✓ Apportez vos pièces d'identité</li>
+                                <li>✓ Annulation 24h à l'avance</li>
+                            </ul>
+                        </div>
+                    </div>
+                </div>
+
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

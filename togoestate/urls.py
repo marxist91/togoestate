@@ -16,14 +16,32 @@ Including another URLconf
 """
 
 from django.urls import path, include
+from django.conf import settings
+from django.conf.urls.static import static
+from django.contrib import admin
 from . import views
-from listings.admin import admin_site
+
+# ⚠️ Import de ton AuditAdminSite centralisé
+from core.admin_site import admin_site
 
 urlpatterns = [
-    path("admin/", admin_site.urls),
-    path('listings/', include('listings.urls')),
-    path('api/', include('listings.urls_api')),
-    path('accounts/', include('accounts.urls')),
-    path('', views.home, name='home'),
-    
+    # 👉 expose ton cockpit admin sous /cockpit/
+    path("cockpit/", admin_site.urls),
+
+    # 👉 si tu veux garder l’admin Django classique
+    path("admin/", admin.site.urls),
+
+    # autres routes
+    path("listings/", include("listings.urls")),
+    path("api/", include("listings.urls_api")),
+    path("accounts/", include("accounts.urls")),
+    path("saved_searches/", include("saved_searches.urls")),
+    path("favorites/", include("favorites.urls")),
+    path("notifications/", include("notifications.urls")),
+    path("", views.home, name="home"),
+    path("about/", views.about, name="about"),
+    path("contact/", views.contact, name="contact"),
 ]
+
+if settings.DEBUG:
+    urlpatterns += static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)

@@ -1,0 +1,68 @@
+[
+  {
+    "model": "listings.listing",
+    "fields": {
+      "title": "Villa moderne à Lomé",
+      "slug": "villa-moderne-lome",
+      "agency": 1,
+      "owner": 2,
+      "category": "house",
+      "listing_type": "sale",
+      "price": 45000000,
+      "currency": "XOF",
+      "bedrooms": 4,
+      "bathrooms": 3,
+      "surface": 250,
+      "city": 28,
+      "address": "Quartier résidentiel",
+      "description": "Belle villa moderne avec jardin et piscine.",
+      "published": true,
+      "created_at": "2025-01-05T09:00:00Z",
+      "updated_at": "2025-01-05T09:00:00Z"
+    }
+  },
+  {
+    "model": "listings.listing",
+    "fields": {
+      "title": "Appartement meublé au centre-ville",
+      "slug": "appartement-meuble-centre-ville",
+      "agency": 1,
+      "owner": 2,
+      "category": "apartment",
+      "listing_type": "rent",
+      "price": 250000,
+      "currency": "XOF",
+      "bedrooms": 2,
+      "bathrooms": 1,
+      "surface": 80,
+      "city": 28,
+      "address": "Boulevard principal",
+      "description": "Appartement meublé proche des commerces et transports.",
+      "published": true,
+      "created_at": "2025-01-06T09:00:00Z",
+      "updated_at": "2025-01-06T09:00:00Z"
+    }
+  },
+  {
+    "model": "listings.listing",
+    "fields": {
+      "title": "Terrain constructible à Agoè",
+      "slug": "terrain-agoe",
+      "agency": 1,
+      "owner": 2,
+      "category": "land",
+      "listing_type": "sale",
+      "price": 15000000,
+      "currency": "XOF",
+      "bedrooms": null,
+      "bathrooms": null,
+      "surface": 600,
+      "city": 29,
+      "address": "Zone en développement",
+      "description": "Terrain bien situé, idéal pour projet immobilier.",
+      "published": false,
+      "created_at": "2025-01-07T09:00:00Z",
+      "updated_at": "2025-01-07T09:00:00Z"
+    }
+  }
+]

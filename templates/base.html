@@ -2,86 +2,1216 @@
 <html lang="fr">
 <head>
   <meta charset="utf-8">
-  <title>TogoEstate</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>{% block title %}TogoEstate{% endblock %}</title>
+  
+  <!-- Bootstrap 5 -->
   <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
+  
+  <!-- FontAwesome -->
+  <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css" rel="stylesheet">
+  
+  <!-- Google Fonts -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+  
+  <style>
+    :root {
+      --primary: #1976D2;
+      --primary-dark: #1565C0;
+      --secondary: #FF9800;
+      --success: #2E7D32;
+      --danger: #D32F2F;
+      --dark: #212529;
+      --sidebar-bg: #1a1d23;
+      --sidebar-hover: #2c3038;
+      --sidebar-active: linear-gradient(135deg, var(--primary) 0%, var(--primary-dark) 100%);
+      --light-bg: #f8f9fa;
+      --border: #e0e0e0;
+      --shadow: 0 2px 8px rgba(0,0,0,0.1);
+      --shadow-lg: 0 4px 20px rgba(0,0,0,0.15);
+    }
+
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+
+    body {
+      font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+      background: var(--light-bg);
+      color: #333;
+      overflow-x: hidden;
+    }
+
+    /* ===== NOTIFICATION BAR ===== */
+    .notification-bar {
+      position: fixed;
+      top: 0;
+      left: 260px;
+      right: 0;
+      height: 50px;
+      background: white;
+      border-bottom: 1px solid var(--border);
+      display: flex;
+      align-items: center;
+      justify-content: flex-end;
+      padding: 0 2rem;
+      z-index: 998;
+      gap: 1.5rem;
+      box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+    }
+
+    .notification-bar-item {
+      position: relative;
+      cursor: pointer;
+      padding: 0.5rem;
+      border-radius: 8px;
+      transition: all 0.3s;
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+    }
+
+    .notification-bar-item:hover {
+      background: var(--light-bg);
+    }
+
+    .notification-bar-item i {
+      font-size: 1.2rem;
+      color: #495057;
+    }
+
+    .notification-badge-top {
+      position: absolute;
+      top: 0;
+      right: 0;
+      background: var(--danger);
+      color: white;
+      border-radius: 10px;
+      padding: 0.1rem 0.4rem;
+      font-size: 0.65rem;
+      font-weight: 700;
+      min-width: 18px;
+      text-align: center;
+    }
+
+    .user-menu {
+      display: flex;
+      align-items: center;
+      gap: 0.75rem;
+      padding: 0.5rem 1rem;
+      border-radius: 8px;
+      cursor: pointer;
+      transition: all 0.3s;
+    }
+
+    .user-menu:hover {
+      background: var(--light-bg);
+    }
+
+    .user-avatar-top {
+      width: 32px;
+      height: 32px;
+      border-radius: 50%;
+      background: var(--primary);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: white;
+      font-weight: 600;
+      font-size: 0.9rem;
+    }
+
+    .user-name-top {
+      font-weight: 600;
+      font-size: 0.9rem;
+      color: #212529;
+    }
+
+    /* Dropdown Notifications */
+    .notification-dropdown {
+      position: absolute;
+      top: calc(100% + 10px);
+      right: 0;
+      width: 380px;
+      max-height: 500px;
+      background: white;
+      border-radius: 12px;
+      box-shadow: 0 10px 40px rgba(0,0,0,0.15);
+      display: none;
+      overflow: hidden;
+    }
+
+    .notification-dropdown.show {
+      display: block;
+      animation: dropdownSlide 0.3s ease-out;
+    }
+
+    @keyframes dropdownSlide {
+      from {
+        opacity: 0;
+        transform: translateY(-10px);
+      }
+      to {
+        opacity: 1;
+        transform: translateY(0);
+      }
+    }
+
+    .notification-dropdown-header {
+      padding: 1rem 1.25rem;
+      border-bottom: 1px solid var(--border);
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+
+    .notification-dropdown-title {
+      font-weight: 700;
+      font-size: 1rem;
+      color: #212529;
+    }
+
+    .mark-all-read {
+      color: var(--primary);
+      font-size: 0.85rem;
+      font-weight: 600;
+      cursor: pointer;
+      text-decoration: none;
+    }
+
+    .mark-all-read:hover {
+      text-decoration: underline;
+    }
+
+    .notification-dropdown-body {
+      max-height: 400px;
+      overflow-y: auto;
+    }
+
+    .notification-item {
+      padding: 1rem 1.25rem;
+      border-bottom: 1px solid var(--border);
+      cursor: pointer;
+      transition: all 0.2s;
+      display: flex;
+      gap: 0.75rem;
+    }
+
+    .notification-item:hover {
+      background: var(--light-bg);
+    }
+
+    .notification-item.unread {
+      background: rgba(25, 118, 210, 0.05);
+    }
+
+    .notification-icon-circle {
+      width: 40px;
+      height: 40px;
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      flex-shrink: 0;
+      font-size: 1.1rem;
+    }
+
+    .notification-icon-circle.success {
+      background: rgba(46, 125, 50, 0.15);
+      color: var(--success);
+    }
+
+    .notification-icon-circle.primary {
+      background: rgba(25, 118, 210, 0.15);
+      color: var(--primary);
+    }
+
+    .notification-icon-circle.warning {
+      background: rgba(239, 108, 0, 0.15);
+      color: var(--secondary);
+    }
+
+    .notification-content {
+      flex: 1;
+      min-width: 0;
+    }
+
+    .notification-text {
+      font-size: 0.9rem;
+      color: #212529;
+      margin: 0 0 0.25rem 0;
+      line-height: 1.4;
+    }
+
+    .notification-time {
+      font-size: 0.75rem;
+      color: #6c757d;
+    }
+
+    .notification-dropdown-footer {
+      padding: 0.75rem 1.25rem;
+      text-align: center;
+      border-top: 1px solid var(--border);
+    }
+
+    .view-all-notifications {
+      color: var(--primary);
+      font-weight: 600;
+      font-size: 0.9rem;
+      text-decoration: none;
+    }
+
+    .view-all-notifications:hover {
+      text-decoration: underline;
+    }
+
+    .notification-empty {
+      padding: 3rem 1rem;
+      text-align: center;
+      color: #6c757d;
+    }
+
+    .notification-empty i {
+      font-size: 3rem;
+      opacity: 0.3;
+      margin-bottom: 1rem;
+    }
+
+    /* ===== SIDEBAR ===== */
+    .sidebar {
+      position: fixed;
+      top: 0;
+      left: 0;
+      bottom: 0;
+      width: 260px;
+      background: var(--sidebar-bg);
+      color: #fff;
+      z-index: 1000;
+      transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+      box-shadow: 2px 0 10px rgba(0, 0, 0, 0.1);
+      overflow-y: auto;
+    }
+
+    .sidebar::-webkit-scrollbar {
+      width: 6px;
+    }
+
+    .sidebar::-webkit-scrollbar-track {
+      background: transparent;
+    }
+
+    .sidebar::-webkit-scrollbar-thumb {
+      background: rgba(255, 255, 255, 0.2);
+      border-radius: 3px;
+    }
+
+    .sidebar::-webkit-scrollbar-thumb:hover {
+      background: rgba(255, 255, 255, 0.3);
+    }
+
+    .sidebar-header {
+      padding: 1.5rem 1.25rem;
+      border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+      background: linear-gradient(135deg, var(--primary) 0%, var(--primary-dark) 100%);
+    }
+
+    .sidebar-brand {
+      display: flex;
+      align-items: center;
+      gap: 0.75rem;
+      font-size: 1.4rem;
+      font-weight: 700;
+      color: #fff;
+      text-decoration: none;
+      letter-spacing: -0.5px;
+    }
+
+    .sidebar-brand i {
+      font-size: 1.6rem;
+    }
+
+    .sidebar-nav {
+      padding: 1rem 0;
+    }
+
+    .sidebar-section {
+      margin-bottom: 1.5rem;
+    }
+
+    .sidebar-section-title {
+      padding: 0.5rem 1.25rem;
+      font-size: 0.75rem;
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+      color: rgba(255, 255, 255, 0.5);
+    }
+
+    .sidebar-link {
+      display: flex;
+      align-items: center;
+      gap: 0.75rem;
+      padding: 0.75rem 1.25rem;
+      color: rgba(255, 255, 255, 0.7);
+      text-decoration: none;
+      transition: all 0.2s ease;
+      position: relative;
+    }
+
+    .sidebar-link:hover {
+      background: var(--sidebar-hover);
+      color: #fff;
+    }
+
+    .sidebar-link.active {
+      background: var(--sidebar-active);
+      color: #fff;
+      box-shadow: inset 3px 0 0 var(--secondary);
+    }
+
+    .sidebar-link i {
+      font-size: 1.1rem;
+      width: 20px;
+      text-align: center;
+    }
+
+    .sidebar-link.logout-link {
+      color: rgba(255, 100, 100, 0.9);
+    }
+
+    .sidebar-link.logout-link:hover {
+      background: rgba(211, 47, 47, 0.1);
+      color: #ff5252;
+    }
+
+    .sidebar-link-badge {
+      margin-left: auto;
+      background: var(--danger);
+      color: white;
+      border-radius: 10px;
+      padding: 0.1rem 0.5rem;
+      font-size: 0.7rem;
+      font-weight: 700;
+    }
+
+    /* User info dans sidebar */
+    .sidebar-user {
+      padding: 1rem 1.25rem;
+      border-top: 1px solid rgba(255, 255, 255, 0.1);
+      background: rgba(0, 0, 0, 0.2);
+      display: flex;
+      align-items: center;
+      gap: 0.75rem;
+    }
+
+    .sidebar-user-avatar {
+      width: 40px;
+      height: 40px;
+      border-radius: 50%;
+      background: var(--primary);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-weight: 600;
+      font-size: 1rem;
+    }
+
+    .sidebar-user-info {
+      flex: 1;
+      min-width: 0;
+    }
+
+    .sidebar-user-name {
+      font-weight: 600;
+      font-size: 0.9rem;
+      color: #fff;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+
+    .sidebar-user-role {
+      font-size: 0.75rem;
+      color: rgba(255, 255, 255, 0.6);
+    }
+
+    /* ===== TOPBAR (Mobile) ===== */
+    .topbar {
+      position: fixed;
+      top: 0;
+      left: 0;
+      right: 0;
+      height: 60px;
+      background: #fff;
+      box-shadow: var(--shadow);
+      display: none;
+      align-items: center;
+      padding: 0 1rem;
+      z-index: 999;
+      gap: 1rem;
+      justify-content: space-between;
+    }
+
+    .topbar-left {
+      display: flex;
+      align-items: center;
+      gap: 1rem;
+    }
+
+    .topbar-brand {
+      font-size: 1.3rem;
+      font-weight: 700;
+      color: var(--primary);
+    }
+
+    .menu-toggle {
+      width: 40px;
+      height: 40px;
+      border: none;
+      background: var(--primary);
+      color: #fff;
+      border-radius: 8px;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      transition: all 0.3s;
+    }
+
+    .menu-toggle:hover {
+      background: var(--primary-dark);
+      transform: scale(1.05);
+    }
+
+    .menu-toggle i {
+      font-size: 1.2rem;
+    }
+
+    .topbar-right {
+      display: flex;
+      align-items: center;
+      gap: 1rem;
+    }
+
+    /* Overlay pour mobile */
+    .sidebar-overlay {
+      position: fixed;
+      top: 0;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      background: rgba(0, 0, 0, 0.5);
+      opacity: 0;
+      visibility: hidden;
+      transition: all 0.3s;
+      z-index: 999;
+    }
+
+    .sidebar-overlay.show {
+      opacity: 1;
+      visibility: visible;
+    }
+
+    /* ===== CONTENU PRINCIPAL ===== */
+    .main-content {
+      margin-left: 260px;
+      margin-top: 50px;
+      min-height: calc(100vh - 50px);
+      padding: 2rem;
+      transition: margin-left 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    }
+
+    /* ===== FOOTER ===== */
+    .footer {
+      background: var(--dark);
+      color: white;
+      margin-top: 4rem;
+      margin-left: 260px;
+      transition: margin-left 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    }
+
+    .footer-cta {
+      background: linear-gradient(135deg, var(--primary) 0%, #1565C0 100%);
+      padding: 3rem 2rem;
+      text-align: center;
+    }
+
+    .footer-cta h3 {
+      font-size: 1.8rem;
+      margin: 0 0 0.5rem 0;
+      font-weight: 700;
+    }
+
+    .footer-cta p {
+      margin: 0 0 1.5rem 0;
+      font-size: 1.1rem;
+      opacity: 0.95;
+    }
+
+    .btn-footer-cta {
+      padding: 0.75rem 2rem;
+      background: rgba(255, 255, 255, 0.2);
+      color: white;
+      border-radius: 8px;
+      text-decoration: none;
+      font-weight: 600;
+      backdrop-filter: blur(10px);
+      border: 2px solid rgba(255, 255, 255, 0.3);
+      transition: all 0.3s;
+      display: inline-block;
+    }
+
+    .btn-footer-cta:hover {
+      background: white;
+      color: var(--primary);
+      transform: translateY(-2px);
+    }
+
+    .footer-main {
+      max-width: 1400px;
+      margin: 0 auto;
+      padding: 3rem 2rem;
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+      gap: 3rem;
+    }
+
+    .footer-section h4 {
+      font-size: 1.2rem;
+      margin-bottom: 1rem;
+      font-weight: 700;
+    }
+
+    .footer-links {
+      list-style: none;
+      padding: 0;
+      margin: 0;
+    }
+
+    .footer-links li {
+      margin-bottom: 0.5rem;
+    }
+
+    .footer-links a {
+      color: rgba(255, 255, 255, 0.8);
+      text-decoration: none;
+      transition: color 0.3s;
+    }
+
+    .footer-links a:hover {
+      color: var(--secondary);
+    }
+
+    .social-links {
+      display: flex;
+      gap: 1rem;
+    }
+
+    .social-links a {
+      color: white;
+      text-decoration: none;
+      transition: color 0.3s;
+      font-size: 1.1rem;
+    }
+
+    .social-links a:hover {
+      color: var(--secondary);
+    }
+
+    /* ===== ALERTS ===== */
+    .alert {
+      border: none;
+      border-radius: 8px;
+      box-shadow: var(--shadow);
+      display: flex;
+      align-items: center;
+      gap: 0.75rem;
+      margin-bottom: 1.5rem;
+    }
+
+    .alert i {
+      font-size: 1.2rem;
+    }
+
+    .alert-success {
+      background: #e8f5e9;
+      color: #2e7d32;
+    }
+
+    .alert-danger {
+      background: #ffebee;
+      color: #c62828;
+    }
+
+    .alert-warning {
+      background: #fff3e0;
+      color: #ef6c00;
+    }
+
+    .alert-info {
+      background: #e3f2fd;
+      color: #1976d2;
+    }
+
+    /* ===== RESPONSIVE ===== */
+    @media (max-width: 992px) {
+      .notification-bar {
+        display: none;
+      }
+
+      .sidebar {
+        transform: translateX(-100%);
+      }
+
+      .sidebar.show {
+        transform: translateX(0);
+      }
+
+      .sidebar-overlay {
+        display: block;
+      }
+
+      .topbar {
+        display: flex;
+      }
+
+      .main-content {
+        margin-left: 0;
+        margin-top: 0;
+        padding: 1rem;
+        padding-top: 80px;
+      }
+
+      .footer {
+        margin-left: 0;
+      }
+    }
+
+    @media (max-width: 576px) {
+      .sidebar {
+        width: 280px;
+      }
+
+      .main-content {
+        padding: 0.75rem;
+        padding-top: 70px;
+      }
+
+      .notification-dropdown {
+        width: calc(100vw - 2rem);
+        right: 1rem;
+      }
+
+      .footer-main {
+        grid-template-columns: 1fr;
+        gap: 2rem;
+      }
+    }
+
+    /* ===== ANIMATIONS ===== */
+    @keyframes slideIn {
+      from {
+        opacity: 0;
+        transform: translateY(20px);
+      }
+      to {
+        opacity: 1;
+        transform: translateY(0);
+      }
+    }
+
+    .animate-in {
+      animation: slideIn 0.4s ease-out;
+    }
+  </style>
 </head>
 <body>
-<nav class="navbar navbar-expand-lg navbar-light bg-light mb-4">
-  <div class="container">
-    <a class="navbar-brand" href="/">TogoEstate</a>
-    <div class="collapse navbar-collapse">
-      <ul class="navbar-nav ms-auto">
-        {% if user.is_authenticated %}
-          <li class="nav-item"><a class="nav-link" href="{% url 'dashboard' %}">Dashboard</a></li>
-          <li class="nav-item"><a class="nav-link" href="{% url 'logout' %}">Déconnexion</a></li>
-        {% else %}
-          <li class="nav-item"><a class="nav-link" href="{% url 'login' %}">Connexion</a></li>
-          <li class="nav-item"><a class="nav-link" href="{% url 'signup' %}">Inscription</a></li>
-        {% endif %}
-      </ul>
+
+<!-- Notification Bar (Desktop) -->
+{% if user.is_authenticated %}
+<div class="notification-bar">
+  <div class="notification-bar-item" id="notificationBell" onclick="toggleNotificationDropdown()">
+    <i class="fa-solid fa-bell"></i>
+    <span class="notification-badge-top" id="notificationBadgeTop" style="display: none;"></span>
+    
+    <!-- Dropdown -->
+    <div class="notification-dropdown" id="notificationDropdown">
+      <div class="notification-dropdown-header">
+        <span class="notification-dropdown-title">Notifications</span>
+        <a href="#" class="mark-all-read" onclick="markAllAsRead(event)">Tout marquer lu</a>
+      </div>
+      <div class="notification-dropdown-body" id="notificationList">
+        <div class="notification-empty">
+          <i class="fa-solid fa-bell-slash"></i>
+          <p>Aucune notification</p>
+        </div>
+      </div>
+      <div class="notification-dropdown-footer">
+        <a href="{% url 'notifications:notification_list' %}" class="view-all-notifications">Voir toutes les notifications</a>
+      </div>
     </div>
   </div>
-</nav>
 
-<div class="container">
-  {% for message in messages %}
-    <div class="alert alert-{{ message.tags }}">{{ message }}</div>
-  {% endfor %}
-  {% block content %}{% endblock %}
+  <div class="user-menu">
+    <div class="user-avatar-top">
+      {{ user.username|slice:":1"|upper }}
+    </div>
+    <span class="user-name-top">{{ user.username }}</span>
+  </div>
+</div>
+{% endif %}
+
+<!-- Topbar Mobile -->
+<div class="topbar">
+  <div class="topbar-left">
+    <button class="menu-toggle" onclick="toggleSidebar()">
+      <i class="fa-solid fa-bars"></i>
+    </button>
+    <div class="topbar-brand">
+      <i class="fa-solid fa-building-columns"></i>
+      TogoEstate
+    </div>
+  </div>
+  {% if user.is_authenticated %}
+  <div class="topbar-right">
+    <div class="notification-bar-item" onclick="window.location.href='{% url 'notifications:notification_list' %}'">
+      <i class="fa-solid fa-bell"></i>
+      <span class="notification-badge-top" id="notificationBadgeMobile" style="display: none;"></span>
+    </div>
+  </div>
+  {% endif %}
 </div>
 
+<!-- Overlay Mobile -->
+<div class="sidebar-overlay" id="sidebarOverlay" onclick="closeSidebar()"></div>
 
-<style>
-.timeline {
-  position: relative;
-  max-width: 900px;
-  margin: 0 auto;
-  padding: 20px 0;
-}
+<!-- Sidebar -->
+<aside class="sidebar" id="sidebar">
+  <!-- Header -->
+  <div class="sidebar-header">
+    <a href="/" class="sidebar-brand">
+      <i class="fa-solid fa-building-columns"></i>
+      <span>TogoEstate</span>
+    </a>
+  </div>
 
-.timeline::after {
-  content: '';
-  position: absolute;
-  width: 4px;
-  background-color: #dee2e6;
-  top: 0;
-  bottom: 0;
-  left: 50%;
-  margin-left: -2px;
-}
+  <!-- Navigation -->
+  <nav class="sidebar-nav">
+    {% if user.is_authenticated %}
+      
+      <!-- Platform Admin -->
+      {% if user.is_platform_admin %}
+        <div class="sidebar-section">
+          <div class="sidebar-section-title">Administration</div>
+          <a href="{% url 'dashboard_platform' %}" class="sidebar-link">
+            <i class="fa-solid fa-gauge-high"></i>
+            <span>Dashboard</span>
+          </a>
+          <a href="{% url 'agency_list' %}" class="sidebar-link">
+            <i class="fa-solid fa-city"></i>
+            <span>Agences</span>
+          </a>
+          <a href="{% url 'agency_create' %}" class="sidebar-link">
+            <i class="fa-solid fa-plus-circle"></i>
+            <span>Créer une agence</span>
+          </a>
+          <a href="{% url 'notifications:notification_list' %}" class="sidebar-link">
+            <i class="fa-solid fa-bell"></i>
+            <span>Notifications</span>
+            <span class="sidebar-link-badge" id="sidebarBadge1" style="display: none;"></span>
+          </a>
+        </div>
+      
+      <!-- Agency Admin -->
+      {% elif user.is_agency_admin %}
+        <div class="sidebar-section">
+          <div class="sidebar-section-title">Mon Agence</div>
+          <a href="{% url 'dashboard_agency' user.agency.id %}" class="sidebar-link">
+            <i class="fa-solid fa-building"></i>
+            <span>Dashboard</span>
+          </a>
+          <a href="{% url 'agency_agents' user.agency.id %}" class="sidebar-link">
+            <i class="fa-solid fa-users"></i>
+            <span>Équipe</span>
+          </a>
+          <a href="{% url 'manage_listings' %}" class="sidebar-link">
+            <i class="fa-solid fa-list"></i>
+            <span>Annonces</span>
+          </a>
+          <a href="{% url 'agency_statistics' user.agency.id %}" class="sidebar-link">
+            <i class="fa-solid fa-chart-line"></i>
+            <span>Statistiques</span>
+          </a>
+          <a href="{% url 'notifications:notification_list' %}" class="sidebar-link">
+            <i class="fa-solid fa-bell"></i>
+            <span>Notifications</span>
+            <span class="sidebar-link-badge" id="sidebarBadge2" style="display: none;"></span>
+          </a>
+        </div>
+      
+      <!-- Agent -->
+      {% elif user.is_agent %}
+        <div class="sidebar-section">
+          <div class="sidebar-section-title">Mon Espace</div>
+          <a href="{% url 'dashboard_agency' user.agency.id %}" class="sidebar-link">
+            <i class="fa-solid fa-briefcase"></i>
+            <span>Dashboard</span>
+          </a>
+          <a href="{% url 'manage_listings' %}" class="sidebar-link">
+            <i class="fa-solid fa-list-check"></i>
+            <span>Mes annonces</span>
+          </a>
+          <a href="{% url 'appointments_list' %}" class="sidebar-link">
+            <i class="fa-solid fa-calendar-days"></i>
+            <span>Rendez-vous</span>
+          </a>
+          <a href="{% url 'notifications:notification_list' %}" class="sidebar-link">
+            <i class="fa-solid fa-bell"></i>
+            <span>Notifications</span>
+            <span class="sidebar-link-badge" id="sidebarBadge3" style="display: none;"></span>
+          </a>
+        </div>
+      
+      <!-- Customer -->
+      {% else %}
+        <div class="sidebar-section">
+          <div class="sidebar-section-title">Mon Compte</div>
+          <a href="{% url 'dashboard_customer' %}" class="sidebar-link">
+            <i class="fa-solid fa-user"></i>
+            <span>Mon espace</span>
+          </a>
+          <a href="{% url 'dashboard_customer' %}#favorites" class="sidebar-link">
+            <i class="fa-solid fa-heart"></i>
+            <span>Favoris</span>
+          </a>
+          <a href="{% url 'dashboard_customer' %}#searches" class="sidebar-link">
+            <i class="fa-solid fa-magnifying-glass"></i>
+            <span>Recherches</span>
+          </a>
+          <a href="{% url 'appointments_list' %}" class="sidebar-link">
+            <i class="fa-solid fa-calendar-days"></i>
+            <span>Rendez-vous</span>
+          </a>
+          <a href="{% url 'notifications:notification_list' %}" class="sidebar-link">
+            <i class="fa-solid fa-bell"></i>
+            <span>Notifications</span>
+            <span class="sidebar-link-badge" id="sidebarBadge4" style="display: none;"></span>
+          </a>
+        </div>
+      {% endif %}
 
-.timeline-item {
-  padding: 20px 30px;
-  position: relative;
-  width: 50%;
-}
+      <!-- Section commune -->
+      <div class="sidebar-section">
+        <div class="sidebar-section-title">Navigation</div>
+        <a href="{% url 'listing_list' %}" class="sidebar-link">
+          <i class="fa-solid fa-home"></i>
+          <span>Annonces</span>
+        </a>
+        <a href="{% url 'agency_list' %}" class="sidebar-link">
+          <i class="fa-solid fa-building"></i>
+          <span>Agences</span>
+        </a>
+      </div>
 
-.timeline-item .content {
-  background-color: #fff;
-  padding: 15px;
-  border-radius: 6px;
-  box-shadow: 0 2px 6px rgba(0,0,0,0.1);
-}
+      <!-- Déconnexion -->
+      <div class="sidebar-section">
+        <a href="{% url 'logout' %}" class="sidebar-link logout-link">
+          <i class="fa-solid fa-right-from-bracket"></i>
+          <span>Déconnexion</span>
+        </a>
+      </div>
 
-.timeline-item.left { left: 0; }
-.timeline-item.right { left: 50%; }
+    {% else %}
+      <!-- Non authentifié -->
+      <div class="sidebar-section">
+        <a href="{% url 'login' %}" class="sidebar-link">
+          <i class="fa-solid fa-right-to-bracket"></i>
+          <span>Connexion</span>
+        </a>
+        <a href="{% url 'signup' %}" class="sidebar-link">
+          <i class="fa-solid fa-user-plus"></i>
+          <span>Inscription</span>
+        </a>
+      </div>
+    {% endif %}
+  </nav>
 
-.timeline-item::before {
-  content: '';
-  position: absolute;
-  top: 25px;
-  width: 20px;
-  height: 20px;
-  border-radius: 50%;
-  border: 3px solid #fff;
-  z-index: 1;
-}
+  <!-- User Info (si authentifié) -->
+  {% if user.is_authenticated %}
+  <div class="sidebar-user">
+    <div class="sidebar-user-avatar">
+      {{ user.username|slice:":1"|upper }}
+    </div>
+    <div class="sidebar-user-info">
+      <div class="sidebar-user-name">{{ user.username }}</div>
+      <div class="sidebar-user-role">
+        {% if user.is_platform_admin %}
+          Admin Plateforme
+        {% elif user.is_agency_admin %}
+          Admin Agence
+        {% elif user.is_agent %}
+          Agent
+        {% else %}
+          Client
+        {% endif %}
+      </div>
+    </div>
+  </div>
+  {% endif %}
+</aside>
 
-/* Couleurs par type */
-.timeline-item.annonce::before { background-color: #28a745; }   /* vert */
-.timeline-item.agence::before  { background-color: #0d6efd; }   /* bleu */
-.timeline-item.utilisateur::before { background-color: #6f42c1; } /* violet */
-</style>
+<!-- Contenu Principal -->
+<main class="main-content">
+  <div class="container-fluid">
+    <!-- Messages Flash -->
+    {% for message in messages %}
+      <div class="alert alert-{{ message.tags }} animate-in" role="alert">
+        <i class="fa-solid 
+          {% if message.tags == 'success' %}fa-circle-check
+          {% elif message.tags == 'danger' %}fa-circle-xmark
+          {% elif message.tags == 'warning' %}fa-triangle-exclamation
+          {% else %}fa-circle-info
+          {% endif %}"></i>
+        <span>{{ message }}</span>
+      </div>
+    {% endfor %}
+
+    <!-- Contenu de la page -->
+    {% block content %}{% endblock %}
+  </div>
+</main>
+
+<!-- Footer -->
+<footer class="footer">
+  
+  <!-- CTA -->
+  <div class="footer-cta">
+    <h3>Vous souhaitez devenir agent immobilier ?</h3>
+    <p>Inscrivez-vous aujourd'hui et rejoignez notre réseau de professionnels certifiés.</p>
+    <a href="#" class="btn-footer-cta">S'inscrire maintenant</a>
+  </div>
+
+  <!-- Main Footer -->
+  <div class="footer-main">
+    
+    <div class="footer-section">
+      <h4>TogoEstate</h4>
+      <p style="color: rgba(255, 255, 255, 0.8); margin: 0;">Lomé, Maritime, Togo</p>
+      <p style="color: rgba(255, 255, 255, 0.6); margin: 0.5rem 0 0 0; font-size: 0.9rem;">© 2025 TogoEstate. Tous droits réservés.</p>
+    </div>
+
+    <div class="footer-section">
+      <h4>Liens rapides</h4>
+      <ul class="footer-links">
+        <li><a href="{% url 'listing_list' %}">Annonces</a></li>
+        <li><a href="{% url 'agency_list' %}">Agences</a></li>
+        <li><a href="#">À propos</a></li>
+        <li><a href="#">Contact</a></li>
+        <li><a href="#">Aide</a></li>
+      </ul>
+    </div>
+
+    <div class="footer-section">
+      <h4>Légal</h4>
+      <ul class="footer-links">
+        <li><a href="#">Mentions légales</a></li>
+        <li><a href="#">Politique de confidentialité</a></li>
+        <li><a href="#">Conditions d'utilisation</a></li>
+        <li><a href="#">CGV</a></li>
+      </ul>
+    </div>
+
+    <div class="footer-section">
+      <h4>Suivez-nous</h4>
+      <div class="social-links">
+        <a href="#" title="Facebook"><i class="fa-brands fa-facebook"></i></a>
+        <a href="#" title="Instagram"><i class="fa-brands fa-instagram"></i></a>
+        <a href="#" title="LinkedIn"><i class="fa-brands fa-linkedin"></i></a>
+        <a href="#" title="Twitter"><i class="fa-brands fa-twitter"></i></a>
+      </div>
+      <p style="color: rgba(255, 255, 255, 0.6); margin-top: 1rem; font-size: 0.9rem;">
+        Restez connecté pour les dernières nouveautés
+      </p>
+    </div>
+
+  </div>
+</footer>
+
+<!-- Bootstrap JS -->
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+
+<!-- Custom JS -->
+<script>
+  // Toggle sidebar mobile
+  function toggleSidebar() {
+    const sidebar = document.getElementById('sidebar');
+    const overlay = document.getElementById('sidebarOverlay');
+    sidebar.classList.toggle('show');
+    overlay.classList.toggle('show');
+  }
+
+  // Close sidebar
+  function closeSidebar() {
+    const sidebar = document.getElementById('sidebar');
+    const overlay = document.getElementById('sidebarOverlay');
+    sidebar.classList.remove('show');
+    overlay.classList.remove('show');
+  }
+
+  // Auto-close sidebar on link click (mobile)
+  if (window.innerWidth <= 992) {
+    document.querySelectorAll('.sidebar-link').forEach(link => {
+      link.addEventListener('click', () => {
+        closeSidebar();
+      });
+    });
+  }
+
+  // Active link highlighting
+  const currentPath = window.location.pathname;
+  document.querySelectorAll('.sidebar-link').forEach(link => {
+    if (link.getAttribute('href') === currentPath) {
+      link.classList.add('active');
+    } else {
+      link.classList.remove('active');
+    }
+  });
+
+  // Toggle notification dropdown
+  function toggleNotificationDropdown() {
+    const dropdown = document.getElementById('notificationDropdown');
+    dropdown.classList.toggle('show');
+    
+    if (dropdown.classList.contains('show')) {
+      loadNotifications();
+    }
+  }
+
+  // Close dropdown when clicking outside
+  document.addEventListener('click', function(event) {
+    const bell = document.getElementById('notificationBell');
+    const dropdown = document.getElementById('notificationDropdown');
+    
+    if (bell && dropdown && !bell.contains(event.target)) {
+      dropdown.classList.remove('show');
+    }
+  });
+
+  // Load notifications
+  function loadNotifications() {
+    fetch('{% url "notifications:notification_list_ajax" %}')
+      .then(response => response.json())
+      .then(data => {
+        const list = document.getElementById('notificationList');
+        
+        if (data.notifications && data.notifications.length > 0) {
+          list.innerHTML = data.notifications.map(notif => `
+            <div class="notification-item ${notif.is_read ? '' : 'unread'}" onclick="markAsRead(${notif.id})">
+              <div class="notification-icon-circle ${notif.type === 'success' ? 'success' : notif.type === 'info' ? 'primary' : 'warning'}">
+                <i class="fa-solid ${notif.icon || 'fa-bell'}"></i>
+              </div>
+              <div class="notification-content">
+                <p class="notification-text">${notif.message}</p>
+                <span class="notification-time">${notif.created_at}</span>
+              </div>
+            </div>
+          `).join('');
+        } else {
+          list.innerHTML = `
+            <div class="notification-empty">
+              <i class="fa-solid fa-bell-slash"></i>
+              <p>Aucune notification</p>
+            </div>
+          `;
+        }
+      })
+      .catch(error => {
+        console.error('Error loading notifications:', error);
+      });
+  }
+
+  // Mark notification as read
+  function markAsRead(notificationId) {
+    fetch(`{% url "notifications:mark_as_read" 0 %}`.replace('0', notificationId), {
+      method: 'POST',
+      headers: {
+        'X-CSRFToken': '{{ csrf_token }}',
+        'Content-Type': 'application/json'
+      }
+    })
+    .then(response => response.json())
+    .then(data => {
+      if (data.success) {
+        updateNotificationBadge();
+        loadNotifications();
+      }
+    })
+    .catch(error => console.error('Error marking as read:', error));
+  }
+
+  // Mark all as read
+  function markAllAsRead(event) {
+    event.preventDefault();
+    
+    fetch('{% url "notifications:mark_all_as_read" %}', {
+      method: 'POST',
+      headers: {
+        'X-CSRFToken': '{{ csrf_token }}',
+        'Content-Type': 'application/json'
+      }
+    })
+    .then(response => response.json())
+    .then(data => {
+      if (data.success) {
+        updateNotificationBadge();
+        loadNotifications();
+      }
+    })
+    .catch(error => console.error('Error marking all as read:', error));
+  }
+
+  // Update notification badge
+  function updateNotificationBadge() {
+    fetch('{% url "notifications:notification_count" %}')
+      .then(response => response.json())
+      .then(data => {
+        const badges = [
+          document.getElementById('notificationBadgeTop'),
+          document.getElementById('notificationBadgeMobile'),
+          document.getElementById('sidebarBadge1'),
+          document.getElementById('sidebarBadge2'),
+          document.getElementById('sidebarBadge3'),
+          document.getElementById('sidebarBadge4')
+        ];
+
+        badges.forEach(badge => {
+          if (badge) {
+            if (data.count > 0) {
+              badge.textContent = data.count > 99 ? '99+' : data.count;
+              badge.style.display = data.count > 0 ? 'flex' : 'none';
+            } else {
+              badge.style.display = 'none';
+            }
+          }
+        });
+      })
+      .catch(error => console.error('Error updating notification badge:', error));
+  }
+
+  // Load notification count on page load
+  document.addEventListener('DOMContentLoaded', function() {
+    {% if user.is_authenticated %}
+    updateNotificationBadge();
+    
+    // Refresh notification count every 30 seconds
+    setInterval(updateNotificationBadge, 30000);
+    {% endif %}
+  });
+</script>
 
 </body>
 </html>

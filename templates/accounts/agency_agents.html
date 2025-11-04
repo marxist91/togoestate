@@ -1,0 +1,595 @@
+{% extends "base.html" %}
+{% load i18n %}
+
+{% block content %}
+
+<style>
+  :root {
+    --primary: #1976D2;
+    --secondary: #FF9800;
+    --success: #2E7D32;
+    --warning: #EF6C00;
+    --info: #17a2b8;
+  }
+
+  /* Header */
+  .team-header {
+    background: linear-gradient(135deg, var(--primary) 0%, #1565C0 100%);
+    color: white;
+    padding: 2rem;
+    border-radius: 12px;
+    margin-bottom: 2rem;
+    box-shadow: 0 4px 20px rgba(25, 118, 210, 0.2);
+  }
+
+  .team-header-content {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 1.5rem;
+  }
+
+  .team-info h1 {
+    font-size: 2rem;
+    font-weight: 700;
+    margin: 0 0 0.5rem 0;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+  }
+
+  .agency-details {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+    flex-wrap: wrap;
+  }
+
+  .agency-name {
+    font-size: 1.2rem;
+    font-weight: 600;
+  }
+
+  .agency-location {
+    opacity: 0.9;
+  }
+
+  .agency-badge {
+    padding: 0.4rem 0.8rem;
+    border-radius: 20px;
+    font-size: 0.85rem;
+    font-weight: 600;
+    display: inline-flex;
+    align-items: center;
+    gap: 0.3rem;
+  }
+
+  .badge-verified {
+    background: rgba(46, 125, 50, 0.2);
+    border: 2px solid rgba(255, 255, 255, 0.3);
+  }
+
+  .badge-pending {
+    background: rgba(239, 108, 0, 0.2);
+    border: 2px solid rgba(255, 255, 255, 0.3);
+  }
+
+  .header-actions {
+    display: flex;
+    gap: 0.75rem;
+    flex-wrap: wrap;
+  }
+
+  .btn-header {
+    padding: 0.6rem 1.2rem;
+    background: rgba(255, 255, 255, 0.2);
+    color: white;
+    border-radius: 8px;
+    text-decoration: none;
+    font-weight: 600;
+    backdrop-filter: blur(10px);
+    border: 2px solid rgba(255, 255, 255, 0.3);
+    transition: all 0.3s;
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5rem;
+  }
+
+  .btn-header:hover {
+    background: white;
+    color: var(--primary);
+    transform: translateY(-2px);
+  }
+
+  /* Team Grid */
+  .team-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(350px, 1fr));
+    gap: 1.5rem;
+  }
+
+  .team-card {
+    background: white;
+    border-radius: 12px;
+    padding: 1.5rem;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+    transition: all 0.3s;
+    position: relative;
+  }
+
+  .team-card:hover {
+    transform: translateY(-4px);
+    box-shadow: 0 4px 20px rgba(0,0,0,0.15);
+  }
+
+  .team-card-header {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+    margin-bottom: 1rem;
+  }
+
+  .team-avatar {
+    width: 60px;
+    height: 60px;
+    border-radius: 50%;
+    background: linear-gradient(135deg, var(--primary) 0%, #1565C0 100%);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: white;
+    font-weight: 700;
+    font-size: 1.5rem;
+    flex-shrink: 0;
+  }
+
+  .team-member-info {
+    flex: 1;
+    min-width: 0;
+  }
+
+  .team-member-name {
+    font-size: 1.2rem;
+    font-weight: 700;
+    color: #212529;
+    margin: 0 0 0.25rem 0;
+  }
+
+  .team-member-fullname {
+    font-size: 0.9rem;
+    color: #6c757d;
+    margin: 0;
+  }
+
+  .team-card-body {
+    display: flex;
+    flex-direction: column;
+    gap: 0.75rem;
+    margin-bottom: 1rem;
+  }
+
+  .team-info-row {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    color: #495057;
+    font-size: 0.9rem;
+  }
+
+  .team-info-row i {
+    width: 20px;
+    color: var(--primary);
+  }
+
+  .team-role-badge {
+    padding: 0.4rem 0.8rem;
+    border-radius: 20px;
+    background: #E3F2FD;
+    border: 1px solid #90CAF9;
+    color: var(--primary);
+    font-size: 0.85rem;
+    font-weight: 600;
+    display: inline-flex;
+    align-items: center;
+    gap: 0.3rem;
+  }
+
+  .team-card-footer {
+    display: flex;
+    gap: 0.75rem;
+    padding-top: 1rem;
+    border-top: 1px solid #e9ecef;
+  }
+
+  .btn {
+    padding: 0.5rem 1rem;
+    border-radius: 8px;
+    text-decoration: none;
+    font-weight: 600;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.5rem;
+    transition: all 0.3s;
+    border: none;
+    cursor: pointer;
+    font-size: 0.9rem;
+    flex: 1;
+  }
+
+  .btn-primary {
+    background: var(--info);
+    color: white;
+  }
+
+  .btn-primary:hover {
+    background: #138496;
+    transform: translateY(-2px);
+  }
+
+  .status-badge {
+    padding: 0.5rem 1rem;
+    border-radius: 8px;
+    font-size: 0.9rem;
+    font-weight: 600;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.3rem;
+  }
+
+  .status-active {
+    background: #E8F5E9;
+    color: var(--success);
+    border: 1px solid #C8E6C9;
+  }
+
+  .status-inactive {
+    background: #FFEBEE;
+    color: #D32F2F;
+    border: 1px solid #FFCDD2;
+  }
+
+  /* Table View (Alternative) */
+  .team-table-container {
+    background: white;
+    border-radius: 12px;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+    overflow: hidden;
+  }
+
+  .team-table {
+    width: 100%;
+    border-collapse: separate;
+    border-spacing: 0;
+  }
+
+  .team-table thead {
+    background: #f8f9fa;
+  }
+
+  .team-table th {
+    padding: 1rem;
+    text-align: left;
+    font-weight: 600;
+    color: #495057;
+    font-size: 0.9rem;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    border-bottom: 2px solid #dee2e6;
+  }
+
+  .team-table td {
+    padding: 1rem;
+    border-bottom: 1px solid #e9ecef;
+  }
+
+  .team-table tbody tr {
+    transition: all 0.3s;
+  }
+
+  .team-table tbody tr:hover {
+    background: #f8f9fa;
+  }
+
+  .table-avatar-cell {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+  }
+
+  .table-avatar {
+    width: 40px;
+    height: 40px;
+    border-radius: 50%;
+    background: linear-gradient(135deg, var(--primary) 0%, #1565C0 100%);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: white;
+    font-weight: 600;
+    flex-shrink: 0;
+  }
+
+  /* Empty State */
+  .empty-state {
+    text-align: center;
+    padding: 4rem 2rem;
+    background: white;
+    border-radius: 12px;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+  }
+
+  .empty-icon {
+    font-size: 4rem;
+    margin-bottom: 1rem;
+    opacity: 0.3;
+  }
+
+  .empty-title {
+    font-size: 1.5rem;
+    font-weight: 700;
+    color: #212529;
+    margin: 0 0 0.5rem 0;
+  }
+
+  .empty-text {
+    color: #6c757d;
+    margin: 0 0 2rem 0;
+  }
+
+  .btn-large {
+    padding: 0.75rem 1.5rem;
+    font-size: 1rem;
+  }
+
+  /* View Toggle */
+  .view-toggle {
+    display: flex;
+    gap: 0.5rem;
+    margin-bottom: 1.5rem;
+  }
+
+  .view-btn {
+    padding: 0.5rem 1rem;
+    background: white;
+    border: 2px solid #e9ecef;
+    border-radius: 8px;
+    cursor: pointer;
+    transition: all 0.3s;
+    font-weight: 600;
+    color: #6c757d;
+  }
+
+  .view-btn.active {
+    background: var(--primary);
+    border-color: var(--primary);
+    color: white;
+  }
+
+  .view-btn:hover {
+    border-color: var(--primary);
+  }
+
+  /* Responsive */
+  @media (max-width: 768px) {
+    .team-header-content {
+      flex-direction: column;
+      align-items: flex-start;
+    }
+
+    .team-info h1 {
+      font-size: 1.5rem;
+    }
+
+    .header-actions {
+      width: 100%;
+    }
+
+    .btn-header {
+      flex: 1;
+      justify-content: center;
+    }
+
+    .team-grid {
+      grid-template-columns: 1fr;
+    }
+
+    .team-table-container {
+      overflow-x: auto;
+    }
+
+    .team-table {
+      font-size: 0.85rem;
+    }
+
+    .team-table th,
+    .team-table td {
+      padding: 0.75rem 0.5rem;
+    }
+
+    .view-toggle {
+      justify-content: center;
+    }
+  }
+</style>
+
+<div class="container-fluid">
+  
+  <!-- Header -->
+  <header class="team-header">
+    <div class="team-header-content">
+      <div class="team-info">
+        <h1>👥 Équipe de l'agence</h1>
+        <div class="agency-details">
+          <span class="agency-name">{{ agency.name }}</span>
+          <span class="agency-location">📍 {{ agency.city|default:"-" }}</span>
+          {% if agency.verified %}
+            <span class="agency-badge badge-verified">✔ Vérifiée</span>
+          {% else %}
+            <span class="agency-badge badge-pending">⏳ En attente</span>
+          {% endif %}
+        </div>
+      </div>
+
+      <div class="header-actions">
+        <a href="{% url 'cockpit_admin:accounts_user_add' %}?agency={{ agency.id }}" class="btn-header">
+          ➕ Ajouter un agent
+        </a>
+        <a href="{% url 'dashboard_agency' agency.id %}" class="btn-header">
+          📊 Dashboard
+        </a>
+      </div>
+    </div>
+  </header>
+
+  {% if agency_users %}
+    <!-- View Toggle -->
+    <div class="view-toggle">
+      <button class="view-btn active" onclick="switchView('grid')">
+        <i class="fa-solid fa-grip"></i> Grille
+      </button>
+      <button class="view-btn" onclick="switchView('table')">
+        <i class="fa-solid fa-table"></i> Tableau
+      </button>
+    </div>
+
+    <!-- Grid View -->
+    <div id="gridView" class="team-grid">
+      {% for user in agency_users %}
+        <div class="team-card">
+          <div class="team-card-header">
+            <div class="team-avatar">
+              {{ user.username|slice:":1"|upper }}
+            </div>
+            <div class="team-member-info">
+              <h3 class="team-member-name">{{ user.username }}</h3>
+              {% if user.first_name or user.last_name %}
+                <p class="team-member-fullname">{{ user.first_name }} {{ user.last_name }}</p>
+              {% endif %}
+            </div>
+          </div>
+
+          <div class="team-card-body">
+            <div class="team-info-row">
+              <i class="fa-solid fa-envelope"></i>
+              <span>{{ user.email|default:"-" }}</span>
+            </div>
+            <div class="team-info-row">
+              <i class="fa-solid fa-briefcase"></i>
+              <span class="team-role-badge">
+                {{ user.get_role_display|default:user.role|default:"agent" }}
+              </span>
+            </div>
+            <div class="team-info-row">
+              <i class="fa-solid fa-calendar"></i>
+              <span>Inscrit le {{ user.date_joined|date:"d/m/Y" }}</span>
+            </div>
+          </div>
+
+          <div class="team-card-footer">
+            <a href="{% url 'cockpit_admin:accounts_user_change' user.id %}" class="btn btn-primary">
+              ✏️ Modifier
+            </a>
+            {% if user.is_active %}
+              <span class="status-badge status-active">✓ Actif</span>
+            {% else %}
+              <span class="status-badge status-inactive">✗ Inactif</span>
+            {% endif %}
+          </div>
+        </div>
+      {% endfor %}
+    </div>
+
+    <!-- Table View -->
+    <div id="tableView" class="team-table-container" style="display: none;">
+      <table class="team-table">
+        <thead>
+          <tr>
+            <th>Membre</th>
+            <th>Email</th>
+            <th>Rôle</th>
+            <th>Date d'inscription</th>
+            <th>Statut</th>
+            <th>Actions</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for user in agency_users %}
+            <tr>
+              <td>
+                <div class="table-avatar-cell">
+                  <div class="table-avatar">
+                    {{ user.username|slice:":1"|upper }}
+                  </div>
+                  <div>
+                    <div style="font-weight:600;">{{ user.username }}</div>
+                    {% if user.first_name or user.last_name %}
+                      <div style="font-size:0.85rem; color:#6c757d;">
+                        {{ user.first_name }} {{ user.last_name }}
+                      </div>
+                    {% endif %}
+                  </div>
+                </div>
+              </td>
+              <td>{{ user.email|default:"-" }}</td>
+              <td>
+                <span class="team-role-badge">
+                  {{ user.get_role_display|default:user.role|default:"agent" }}
+                </span>
+              </td>
+              <td>{{ user.date_joined|date:"d/m/Y H:i" }}</td>
+              <td>
+                {% if user.is_active %}
+                  <span class="status-badge status-active">✓ Actif</span>
+                {% else %}
+                  <span class="status-badge status-inactive">✗ Inactif</span>
+                {% endif %}
+              </td>
+              <td>
+                <a href="{% url 'cockpit_admin:accounts_user_change' user.id %}" class="btn btn-primary" style="width: auto; padding: 0.4rem 0.8rem;">
+                  ✏️ Modifier
+                </a>
+              </td>
+            </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+
+  {% else %}
+    <!-- Empty State -->
+    <div class="empty-state">
+      <div class="empty-icon">👥</div>
+      <h3 class="empty-title">Aucun agent dans cette agence</h3>
+      <p class="empty-text">Commencez par ajouter des agents à votre équipe pour gérer vos annonces.</p>
+      <a href="{% url 'cockpit_admin:accounts_user_add' %}?agency={{ agency.id }}" class="btn btn-primary btn-large" style="background: var(--primary);">
+        ➕ Ajouter le premier agent
+      </a>
+    </div>
+  {% endif %}
+
+</div>
+
+<script>
+  // View Switching
+  function switchView(view) {
+    const gridView = document.getElementById('gridView');
+    const tableView = document.getElementById('tableView');
+    const buttons = document.querySelectorAll('.view-btn');
+
+    buttons.forEach(btn => btn.classList.remove('active'));
+
+    if (view === 'grid') {
+      gridView.style.display = 'grid';
+      tableView.style.display = 'none';
+      buttons[0].classList.add('active');
+    } else {
+      gridView.style.display = 'none';
+      tableView.style.display = 'block';
+      buttons[1].classList.add('active');
+    }
+  }
+</script>
+
+{% endblock %}

@@ -1,0 +1,653 @@
+{% extends "base.html" %}
+
+{% block content %}
+
+<style>
+  :root {
+    --primary: #1976D2;
+    --secondary: #FF9800;
+    --success: #2E7D32;
+    --warning: #EF6C00;
+    --danger: #D32F2F;
+    --info: #00ACC1;
+  }
+
+  /* Header */
+  .page-header {
+    background: linear-gradient(135deg, var(--primary) 0%, #1565C0 100%);
+    color: white;
+    padding: 2rem;
+    border-radius: 16px;
+    margin-bottom: 2rem;
+    box-shadow: 0 8px 32px rgba(25, 118, 210, 0.25);
+  }
+
+  .header-title {
+    font-size: 2rem;
+    font-weight: 700;
+    margin: 0 0 0.5rem 0;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+  }
+
+  .header-subtitle {
+    font-size: 1rem;
+    opacity: 0.9;
+    margin: 0;
+  }
+
+  /* Stats Grid */
+  .stats-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+    gap: 1.5rem;
+    margin-bottom: 2rem;
+  }
+
+  .stat-card {
+    background: white;
+    border-radius: 16px;
+    padding: 1.75rem;
+    box-shadow: 0 4px 12px rgba(0,0,0,0.08);
+    transition: all 0.3s;
+    position: relative;
+    overflow: hidden;
+  }
+
+  .stat-card::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    height: 4px;
+  }
+
+  .stat-card.total::before {
+    background: linear-gradient(90deg, var(--primary), #1565C0);
+  }
+
+  .stat-card.pending::before {
+    background: linear-gradient(90deg, var(--warning), #E65100);
+  }
+
+  .stat-card.confirmed::before {
+    background: linear-gradient(90deg, var(--success), #1B5E20);
+  }
+
+  .stat-card.cancelled::before {
+    background: linear-gradient(90deg, var(--danger), #B71C1C);
+  }
+
+  .stat-card:hover {
+    transform: translateY(-6px);
+    box-shadow: 0 8px 24px rgba(0,0,0,0.12);
+  }
+
+  .stat-icon {
+    width: 55px;
+    height: 55px;
+    border-radius: 14px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1.6rem;
+    margin-bottom: 1rem;
+  }
+
+  .stat-icon.primary {
+    background: rgba(25, 118, 210, 0.15);
+    color: var(--primary);
+  }
+
+  .stat-icon.warning {
+    background: rgba(239, 108, 0, 0.15);
+    color: var(--warning);
+  }
+
+  .stat-icon.success {
+    background: rgba(46, 125, 50, 0.15);
+    color: var(--success);
+  }
+
+  .stat-icon.danger {
+    background: rgba(211, 47, 47, 0.15);
+    color: var(--danger);
+  }
+
+  .stat-value {
+    font-size: 2.5rem;
+    font-weight: 800;
+    line-height: 1;
+    margin-bottom: 0.5rem;
+  }
+
+  .stat-label {
+    font-size: 0.95rem;
+    color: #6c757d;
+    font-weight: 600;
+  }
+
+  /* Filters */
+  .filters-bar {
+    display: flex;
+    gap: 1rem;
+    margin-bottom: 1.5rem;
+    flex-wrap: wrap;
+  }
+
+  .filter-btn {
+    padding: 0.6rem 1.2rem;
+    border: 2px solid #e9ecef;
+    background: white;
+    border-radius: 10px;
+    font-weight: 600;
+    font-size: 0.9rem;
+    cursor: pointer;
+    transition: all 0.3s;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+  }
+
+  .filter-btn.active {
+    border-color: var(--primary);
+    background: var(--primary);
+    color: white;
+  }
+
+  .filter-btn:hover:not(.active) {
+    border-color: var(--primary);
+  }
+
+  /* Appointments List */
+  .appointments-container {
+    background: white;
+    border-radius: 16px;
+    box-shadow: 0 4px 12px rgba(0,0,0,0.08);
+    overflow: hidden;
+  }
+
+  .appointment-item {
+    padding: 1.75rem;
+    border-bottom: 1px solid #f0f0f0;
+    transition: all 0.3s;
+  }
+
+  .appointment-item:last-child {
+    border-bottom: none;
+  }
+
+  .appointment-item:hover {
+    background: #f8f9fa;
+  }
+
+  .appointment-content {
+    display: flex;
+    gap: 1.5rem;
+    align-items: start;
+  }
+
+  .appointment-icon {
+    width: 60px;
+    height: 60px;
+    border-radius: 12px;
+    background: linear-gradient(135deg, var(--primary), #1565C0);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: white;
+    font-size: 1.5rem;
+    flex-shrink: 0;
+  }
+
+  .appointment-details {
+    flex: 1;
+    min-width: 0;
+  }
+
+  .appointment-title {
+    font-size: 1.2rem;
+    font-weight: 700;
+    color: #212529;
+    margin: 0 0 0.75rem 0;
+  }
+
+  .appointment-title a {
+    color: #212529;
+    text-decoration: none;
+    transition: color 0.3s;
+  }
+
+  .appointment-title a:hover {
+    color: var(--primary);
+  }
+
+  .appointment-info-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+    gap: 0.75rem;
+    margin-bottom: 1rem;
+  }
+
+  .appointment-info-item {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    font-size: 0.9rem;
+    color: #495057;
+  }
+
+  .appointment-info-item i {
+    color: var(--primary);
+    width: 16px;
+  }
+
+  .appointment-notes {
+    background: #f8f9fa;
+    padding: 0.75rem 1rem;
+    border-radius: 8px;
+    border-left: 3px solid var(--info);
+    margin-top: 0.75rem;
+  }
+
+  .appointment-notes-label {
+    font-weight: 600;
+    color: #495057;
+    font-size: 0.85rem;
+    margin-bottom: 0.25rem;
+  }
+
+  .appointment-notes-text {
+    color: #6c757d;
+    font-size: 0.9rem;
+    margin: 0;
+  }
+
+  .appointment-actions {
+    display: flex;
+    flex-direction: column;
+    gap: 0.75rem;
+    align-items: flex-end;
+  }
+
+  .appointment-badge {
+    padding: 0.5rem 1rem;
+    border-radius: 20px;
+    font-size: 0.85rem;
+    font-weight: 700;
+    display: inline-flex;
+    align-items: center;
+    gap: 0.4rem;
+    white-space: nowrap;
+  }
+
+  .badge-pending {
+    background: #FFF3E0;
+    color: var(--warning);
+    border: 2px solid #FFE0B2;
+  }
+
+  .badge-confirmed {
+    background: #E8F5E9;
+    color: var(--success);
+    border: 2px solid #C8E6C9;
+  }
+
+  .badge-cancelled {
+    background: #FFEBEE;
+    color: var(--danger);
+    border: 2px solid #FFCDD2;
+  }
+
+  .badge-completed {
+    background: #E3F2FD;
+    color: var(--primary);
+    border: 2px solid #90CAF9;
+  }
+
+  .action-buttons {
+    display: flex;
+    gap: 0.5rem;
+    flex-wrap: wrap;
+    justify-content: flex-end;
+  }
+
+  .btn-action {
+    padding: 0.5rem 1rem;
+    border-radius: 8px;
+    font-size: 0.85rem;
+    font-weight: 600;
+    text-decoration: none;
+    transition: all 0.3s;
+    border: none;
+    cursor: pointer;
+    display: inline-flex;
+    align-items: center;
+    gap: 0.4rem;
+  }
+
+  .btn-view {
+    background: #E3F2FD;
+    color: var(--primary);
+  }
+
+  .btn-view:hover {
+    background: var(--primary);
+    color: white;
+  }
+
+  .btn-confirm {
+    background: #E8F5E9;
+    color: var(--success);
+  }
+
+  .btn-confirm:hover {
+    background: var(--success);
+    color: white;
+  }
+
+  .btn-cancel {
+    background: #FFEBEE;
+    color: var(--danger);
+  }
+
+  .btn-cancel:hover {
+    background: var(--danger);
+    color: white;
+  }
+
+  .btn-complete {
+    background: #E3F2FD;
+    color: var(--primary);
+  }
+
+  .btn-complete:hover {
+    background: var(--primary);
+    color: white;
+  }
+
+  /* Empty State */
+  .empty-state {
+    text-align: center;
+    padding: 4rem 2rem;
+  }
+
+  .empty-icon {
+    font-size: 5rem;
+    margin-bottom: 1.5rem;
+    opacity: 0.3;
+  }
+
+  .empty-title {
+    font-size: 1.5rem;
+    font-weight: 700;
+    color: #212529;
+    margin: 0 0 0.5rem 0;
+  }
+
+  .empty-text {
+    color: #6c757d;
+    font-size: 1rem;
+  }
+
+  /* Responsive */
+  @media (max-width: 768px) {
+    .header-title {
+      font-size: 1.6rem;
+    }
+
+    .stats-grid {
+      grid-template-columns: repeat(2, 1fr);
+    }
+
+    .stat-value {
+      font-size: 2rem;
+    }
+
+    .appointment-content {
+      flex-direction: column;
+    }
+
+    .appointment-icon {
+      width: 50px;
+      height: 50px;
+      font-size: 1.3rem;
+    }
+
+    .appointment-info-grid {
+      grid-template-columns: 1fr;
+    }
+
+    .appointment-actions {
+      width: 100%;
+      align-items: stretch;
+    }
+
+    .action-buttons {
+      width: 100%;
+      justify-content: stretch;
+    }
+
+    .btn-action {
+      flex: 1;
+      justify-content: center;
+    }
+
+    .filters-bar {
+      flex-direction: column;
+    }
+
+    .filter-btn {
+      width: 100%;
+      justify-content: center;
+    }
+  }
+</style>
+
+<div class="container-fluid">
+  
+  <!-- Header -->
+  <div class="page-header">
+    <h1 class="header-title">
+      📅 Mes rendez-vous
+    </h1>
+    <p class="header-subtitle">Gérez vos rendez-vous de visite immobilière</p>
+  </div>
+
+  <!-- Stats -->
+  <div class="stats-grid">
+    <div class="stat-card total">
+      <div class="stat-icon primary">
+        📊
+      </div>
+      <div class="stat-value" style="color: var(--primary);">{{ stats.total }}</div>
+      <div class="stat-label">Total rendez-vous</div>
+    </div>
+
+    <div class="stat-card pending">
+      <div class="stat-icon warning">
+        ⏳
+      </div>
+      <div class="stat-value" style="color: var(--warning);">{{ stats.pending }}</div>
+      <div class="stat-label">En attente</div>
+    </div>
+
+    <div class="stat-card confirmed">
+      <div class="stat-icon success">
+        ✅
+      </div>
+      <div class="stat-value" style="color: var(--success);">{{ stats.confirmed }}</div>
+      <div class="stat-label">Confirmés</div>
+    </div>
+
+    <div class="stat-card cancelled">
+      <div class="stat-icon danger">
+        ❌
+      </div>
+      <div class="stat-value" style="color: var(--danger);">{{ stats.cancelled }}</div>
+      <div class="stat-label">Annulés</div>
+    </div>
+  </div>
+
+  <!-- Filters -->
+  <div class="filters-bar">
+    <button class="filter-btn active" data-filter="all">
+      📋 Tous
+    </button>
+    <button class="filter-btn" data-filter="pending">
+      ⏳ En attente
+    </button>
+    <button class="filter-btn" data-filter="confirmed">
+      ✅ Confirmés
+    </button>
+    <button class="filter-btn" data-filter="completed">
+      ✔️ Terminés
+    </button>
+    <button class="filter-btn" data-filter="cancelled">
+      ❌ Annulés
+    </button>
+  </div>
+
+  <!-- Appointments List -->
+  <div class="appointments-container">
+    {% if appointments %}
+      {% for appointment in appointments %}
+        <div class="appointment-item" data-status="{{ appointment.status }}">
+          <div class="appointment-content">
+            
+            <!-- Icon -->
+            <div class="appointment-icon">
+              🏠
+            </div>
+
+            <!-- Details -->
+            <div class="appointment-details">
+              <h3 class="appointment-title">
+                <a href="{% url 'listing_detail' appointment.listing.slug %}">
+                  {{ appointment.listing.title }}
+                </a>
+              </h3>
+
+              <div class="appointment-info-grid">
+                <div class="appointment-info-item">
+                  <i class="fa-solid fa-calendar"></i>
+                  <span>{{ appointment.scheduled_date|date:"l d F Y" }}</span>
+                </div>
+                <div class="appointment-info-item">
+                  <i class="fa-solid fa-clock"></i>
+                  <span>{{ appointment.scheduled_date|date:"H:i" }} ({{ appointment.duration_minutes }} min)</span>
+                </div>
+                {% if user.is_agent %}
+                  <div class="appointment-info-item">
+                    <i class="fa-solid fa-user"></i>
+                    <span>{{ appointment.customer.get_full_name|default:appointment.customer.username }}</span>
+                  </div>
+                {% else %}
+                  <div class="appointment-info-item">
+                    <i class="fa-solid fa-user-tie"></i>
+                    <span>{{ appointment.agent.get_full_name|default:appointment.agent.username }}</span>
+                  </div>
+                {% endif %}
+                <div class="appointment-info-item">
+                  <i class="fa-solid fa-building"></i>
+                  <span>{{ appointment.listing.agency.name }}</span>
+                </div>
+              </div>
+
+              {% if appointment.notes %}
+                <div class="appointment-notes">
+                  <div class="appointment-notes-label">💬 Notes</div>
+                  <p class="appointment-notes-text">{{ appointment.notes }}</p>
+                </div>
+              {% endif %}
+            </div>
+
+            <!-- Actions -->
+            <div class="appointment-actions">
+              <!-- Badge Status -->
+              <span class="appointment-badge badge-{{ appointment.status }}">
+                {% if appointment.status == 'pending' %}⏳ En attente{% endif %}
+                {% if appointment.status == 'confirmed' %}✅ Confirmé{% endif %}
+                {% if appointment.status == 'cancelled' %}❌ Annulé{% endif %}
+                {% if appointment.status == 'completed' %}✔️ Terminé{% endif %}
+              </span>
+
+              <!-- Action Buttons -->
+              <div class="action-buttons">
+                <a href="{% url 'appointment_detail' appointment.id %}" class="btn-action btn-view">
+                  <i class="fa-solid fa-eye"></i> Voir
+                </a>
+
+                {% if user == appointment.agent or user.is_agency_admin %}
+                  {% if appointment.can_be_modified %}
+                    {% if appointment.status == 'pending' %}
+                      <a href="{% url 'appointment_update_status' appointment.id 'confirmed' %}" class="btn-action btn-confirm">
+                        <i class="fa-solid fa-check"></i> Confirmer
+                      </a>
+                      <a href="{% url 'appointment_update_status' appointment.id 'cancelled' %}" class="btn-action btn-cancel">
+                        <i class="fa-solid fa-xmark"></i> Annuler
+                      </a>
+                    {% endif %}
+                    {% if appointment.status == 'confirmed' %}
+                      <a href="{% url 'appointment_update_status' appointment.id 'completed' %}" class="btn-action btn-complete">
+                        <i class="fa-solid fa-check-double"></i> Terminer
+                      </a>
+                    {% endif %}
+                  {% endif %}
+                {% endif %}
+              </div>
+            </div>
+
+          </div>
+        </div>
+      {% endfor %}
+    {% else %}
+      <div class="empty-state">
+        <div class="empty-icon">📅</div>
+        <h3 class="empty-title">Aucun rendez-vous trouvé</h3>
+        <p class="empty-text">Vous n'avez pas encore de rendez-vous programmés.</p>
+      </div>
+    {% endif %}
+  </div>
+
+</div>
+
+<script>
+  // Filter functionality
+  const filterButtons = document.querySelectorAll('.filter-btn');
+  const appointmentItems = document.querySelectorAll('.appointment-item');
+
+  filterButtons.forEach(button => {
+    button.addEventListener('click', function() {
+      const filter = this.getAttribute('data-filter');
+      
+      // Update active button
+      filterButtons.forEach(btn => btn.classList.remove('active'));
+      this.classList.add('active');
+
+      // Filter appointments
+      appointmentItems.forEach(item => {
+        const status = item.getAttribute('data-status');
+        if (filter === 'all' || status === filter) {
+          item.style.display = 'block';
+        } else {
+          item.style.display = 'none';
+        }
+      });
+    });
+  });
+
+  // Confirmation dialogs
+  document.querySelectorAll('.btn-cancel, .btn-complete').forEach(button => {
+    button.addEventListener('click', function(e) {
+      const action = this.classList.contains('btn-cancel') ? 'annuler' : 'terminer';
+      if (!confirm(`Êtes-vous sûr de vouloir ${action} ce rendez-vous ?`)) {
+        e.preventDefault();
+      }
+    });
+  });
+</script>
+
+{% endblock %}

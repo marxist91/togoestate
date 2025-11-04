@@ -1,0 +1,245 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Notifications - TogoEstate{% endblock %}
+
+{% block content %}
+<input type="hidden" name="csrfmiddlewaretoken" value="{{ csrf_token }}">
+<div class="container-fluid">
+  <div class="row">
+    <div class="col-12">
+      <div class="d-flex justify-content-between align-items-center mb-4">
+        <h1 class="h3 mb-0">
+          <i class="fa-solid fa-bell me-2"></i>
+          Notifications
+        </h1>
+        <div class="d-flex gap-2">
+          <form method="post" action="{% url 'notifications:mark_all_as_read' %}" style="display: inline;">
+            {% csrf_token %}
+            <button type="submit" class="btn btn-outline-primary btn-sm" onclick="return confirm('Marquer toutes les notifications comme lues ?')">
+              <i class="fa-solid fa-check-double me-1"></i>
+              Tout marquer comme lu
+            </button>
+          </form>
+        </div>
+      </div>
+
+      <!-- Filters -->
+      <div class="card mb-4">
+        <div class="card-body">
+          <form method="get" class="row g-3">
+            <div class="col-md-4">
+              <label for="status" class="form-label">Statut</label>
+              <select name="status" id="status" class="form-select">
+                <option value="">Tous</option>
+                <option value="unread" {% if status_filter == 'unread' %}selected{% endif %}>Non lus</option>
+                <option value="read" {% if status_filter == 'read' %}selected{% endif %}>Lus</option>
+              </select>
+            </div>
+            <div class="col-md-6">
+              <label for="search" class="form-label">Rechercher</label>
+              <input type="text" name="search" id="search" class="form-control" placeholder="Titre ou message..." value="{{ search_query }}">
+            </div>
+            <div class="col-md-2 d-flex align-items-end">
+              <button type="submit" class="btn btn-primary w-100">
+                <i class="fa-solid fa-search me-1"></i>
+                Filtrer
+              </button>
+            </div>
+          </form>
+        </div>
+      </div>
+
+      <!-- Notifications List -->
+      {% if notifications %}
+        <div class="row">
+          {% for notification in notifications %}
+          <div class="col-12 mb-3">
+            <div class="card notification-card {% if not notification.is_read %}border-primary{% endif %}" data-notification-id="{{ notification.id }}">
+              <div class="card-body">
+                <div class="d-flex justify-content-between align-items-start">
+                  <div class="flex-grow-1">
+                    <div class="d-flex align-items-center mb-2">
+                      <h6 class="card-title mb-0 me-2">
+                        {% if notification.notification_type == 'appointment_request' %}
+                          <i class="fa-solid fa-calendar-plus text-info me-1"></i>
+                        {% elif notification.notification_type == 'appointment_confirmed' %}
+                          <i class="fa-solid fa-calendar-check text-success me-1"></i>
+                        {% elif notification.notification_type == 'appointment_cancelled' %}
+                          <i class="fa-solid fa-calendar-xmark text-danger me-1"></i>
+                        {% elif notification.notification_type == 'listing_approved' %}
+                          <i class="fa-solid fa-check-circle text-success me-1"></i>
+                        {% elif notification.notification_type == 'listing_rejected' %}
+                          <i class="fa-solid fa-times-circle text-danger me-1"></i>
+                        {% elif notification.notification_type == 'agency_approved' %}
+                          <i class="fa-solid fa-building-circle-check text-success me-1"></i>
+                        {% else %}
+                          <i class="fa-solid fa-bell text-primary me-1"></i>
+                        {% endif %}
+                        {{ notification.title }}
+                      </h6>
+                      {% if not notification.is_read %}
+                        <span class="badge bg-primary">Nouveau</span>
+                      {% endif %}
+                    </div>
+                    <p class="card-text text-muted mb-2">{{ notification.message }}</p>
+                    <small class="text-muted">
+                      <i class="fa-solid fa-clock me-1"></i>
+                      {{ notification.created_at|date:"d/m/Y H:i" }}
+                    </small>
+                  </div>
+                  <div class="d-flex flex-column gap-2">
+                    {% if notification.action_url %}
+                      <a href="{{ notification.action_url }}" class="btn btn-sm btn-outline-primary">
+                        <i class="fa-solid fa-arrow-right me-1"></i>
+                        Voir
+                      </a>
+                    {% endif %}
+                    <div class="dropdown">
+                      <button class="btn btn-sm btn-outline-secondary dropdown-toggle" type="button" data-bs-toggle="dropdown">
+                        <i class="fa-solid fa-ellipsis-vertical"></i>
+                      </button>
+                      <ul class="dropdown-menu">
+                        {% if not notification.is_read %}
+                          <li><a class="dropdown-item mark-read" href="#" data-url="{% url 'notifications:mark_as_read' notification.id %}">
+                            <i class="fa-solid fa-check me-2"></i>Marquer comme lu
+                          </a></li>
+                        {% endif %}
+                        <li><a class="dropdown-item text-danger delete-notification" href="#" data-url="{% url 'notifications:delete_notification' notification.id %}">
+                          <i class="fa-solid fa-trash me-2"></i>Supprimer
+                        </a></li>
+                      </ul>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+          {% endfor %}
+        </div>
+
+        <!-- Pagination -->
+        {% if notifications.has_other_pages %}
+          <nav aria-label="Notifications pagination" class="mt-4">
+            <ul class="pagination justify-content-center">
+              {% if notifications.has_previous %}
+                <li class="page-item">
+                  <a class="page-link" href="?page={{ notifications.previous_page_number }}{% if status_filter %}&status={{ status_filter }}{% endif %}{% if search_query %}&search={{ search_query }}{% endif %}">
+                    <i class="fa-solid fa-chevron-left"></i>
+                  </a>
+                </li>
+              {% endif %}
+
+              {% for num in notifications.paginator.page_range %}
+                {% if notifications.number == num %}
+                  <li class="page-item active">
+                    <a class="page-link">{{ num }}</a>
+                  </li>
+                {% elif num > notifications.number|add:'-3' and num < notifications.number|add:'3' %}
+                  <li class="page-item">
+                    <a class="page-link" href="?page={{ num }}{% if status_filter %}&status={{ status_filter }}{% endif %}{% if search_query %}&search={{ search_query }}{% endif %}">{{ num }}</a>
+                  </li>
+                {% endif %}
+              {% endfor %}
+
+              {% if notifications.has_next %}
+                <li class="page-item">
+                  <a class="page-link" href="?page={{ notifications.next_page_number }}{% if status_filter %}&status={{ status_filter }}{% endif %}{% if search_query %}&search={{ search_query }}{% endif %}">
+                    <i class="fa-solid fa-chevron-right"></i>
+                  </a>
+                </li>
+              {% endif %}
+            </ul>
+          </nav>
+        {% endif %}
+
+      {% else %}
+        <div class="text-center py-5">
+          <i class="fa-solid fa-bell-slash fa-3x text-muted mb-3"></i>
+          <h5 class="text-muted">Aucune notification</h5>
+          <p class="text-muted">Vous n'avez pas encore de notifications.</p>
+        </div>
+      {% endif %}
+    </div>
+  </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+  // Mark as read
+  document.querySelectorAll('.mark-read').forEach(link => {
+    link.addEventListener('click', function(e) {
+      e.preventDefault();
+      const url = this.getAttribute('data-url');
+      const card = this.closest('.notification-card');
+
+      fetch(url, {
+        method: 'POST',
+        headers: {
+          'X-CSRFToken': document.querySelector('[name=csrfmiddlewaretoken]').value,
+          'X-Requested-With': 'XMLHttpRequest'
+        }
+      })
+      .then(response => response.json())
+      .then(data => {
+        if (data.success) {
+          card.classList.remove('border-primary');
+          card.querySelector('.badge')?.remove();
+          this.remove();
+          updateNotificationBadge();
+        }
+      });
+    });
+  });
+
+  // Delete notification
+  document.querySelectorAll('.delete-notification').forEach(link => {
+    link.addEventListener('click', function(e) {
+      e.preventDefault();
+      if (!confirm('Êtes-vous sûr de vouloir supprimer cette notification ?')) return;
+
+      const url = this.getAttribute('data-url');
+      const card = this.closest('.notification-card');
+      const csrfToken = document.querySelector('[name=csrfmiddlewaretoken]').value;
+
+      const formData = new FormData();
+      formData.append('csrfmiddlewaretoken', csrfToken);
+
+      fetch(url, {
+        method: 'POST',
+        headers: {
+          'X-Requested-With': 'XMLHttpRequest'
+        },
+        body: formData
+      })
+      .then(response => response.json())
+      .then(data => {
+        if (data.success) {
+          card.remove();
+          updateNotificationBadge();
+        }
+      });
+    });
+  });
+
+  // Update notification badge
+  function updateNotificationBadge() {
+    fetch('{% url "notifications:notification_count" %}')
+    .then(response => response.json())
+    .then(data => {
+      const badge = document.querySelector('.notification-badge');
+      if (badge) {
+        if (data.count > 0) {
+          badge.textContent = data.count > 99 ? '99+' : data.count;
+          badge.style.display = 'flex';
+        } else {
+          badge.style.display = 'none';
+        }
+      }
+    });
+  }
+});
+</script>
+{% endblock %}

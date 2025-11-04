@@ -1,8 +1,732 @@
 {% extends "base.html" %}
 {% block content %}
-<h2>Créer une agence</h2>
-<form method="post">{% csrf_token %}
-  {{ form.as_p }}
-  <button class="btn btn-primary" type="submit">Créer</button>
-</form>
+
+<style>
+  :root {
+    --primary: #1976D2;
+    --secondary: #FF9800;
+    --success: #2E7D32;
+    --danger: #D32F2F;
+  }
+
+  /* Page Header */
+  .form-header {
+    background: linear-gradient(135deg, var(--primary) 0%, #1565C0 100%);
+    color: white;
+    padding: 2.5rem 2rem;
+    border-radius: 16px;
+    margin-bottom: 2rem;
+    box-shadow: 0 8px 32px rgba(25, 118, 210, 0.25);
+    position: relative;
+    overflow: hidden;
+  }
+
+  .form-header::before {
+    content: '';
+    position: absolute;
+    top: -50%;
+    right: -10%;
+    width: 300px;
+    height: 300px;
+    background: rgba(255, 255, 255, 0.1);
+    border-radius: 50%;
+  }
+
+  .header-content {
+    position: relative;
+    z-index: 1;
+  }
+
+  .header-title {
+    font-size: 2.2rem;
+    font-weight: 700;
+    margin: 0 0 0.5rem 0;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+  }
+
+  .header-subtitle {
+    font-size: 1.1rem;
+    opacity: 0.95;
+    margin: 0;
+  }
+
+  .breadcrumb {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    margin-top: 1rem;
+    font-size: 0.9rem;
+  }
+
+  .breadcrumb a {
+    color: white;
+    text-decoration: none;
+    opacity: 0.8;
+    transition: opacity 0.3s;
+  }
+
+  .breadcrumb a:hover {
+    opacity: 1;
+  }
+
+  /* Form Container */
+  .form-container {
+    max-width: 900px;
+    margin: 0 auto;
+  }
+
+  .form-card {
+    background: white;
+    border-radius: 16px;
+    padding: 2.5rem;
+    box-shadow: 0 4px 20px rgba(0,0,0,0.08);
+  }
+
+  .form-section {
+    margin-bottom: 2.5rem;
+  }
+
+  .section-title {
+    font-size: 1.3rem;
+    font-weight: 700;
+    color: #212529;
+    margin: 0 0 1.5rem 0;
+    padding-bottom: 0.75rem;
+    border-bottom: 2px solid #f0f0f0;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+  }
+
+  /* Form Fields */
+  .form-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+    gap: 1.5rem;
+  }
+
+  .form-field {
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+  }
+
+  .form-field.full-width {
+    grid-column: 1 / -1;
+  }
+
+  .form-label {
+    font-size: 0.95rem;
+    font-weight: 600;
+    color: #495057;
+    display: flex;
+    align-items: center;
+    gap: 0.3rem;
+  }
+
+  .required {
+    color: var(--danger);
+  }
+
+  .form-input,
+  .form-select,
+  .form-textarea {
+    padding: 0.75rem 1rem;
+    border: 2px solid #e9ecef;
+    border-radius: 10px;
+    font-size: 0.95rem;
+    transition: all 0.3s;
+    background: white;
+  }
+
+  .form-input:focus,
+  .form-select:focus,
+  .form-textarea:focus {
+    outline: none;
+    border-color: var(--primary);
+    box-shadow: 0 0 0 4px rgba(25, 118, 210, 0.1);
+  }
+
+  .form-textarea {
+    resize: vertical;
+    min-height: 120px;
+    font-family: inherit;
+  }
+
+  .form-help {
+    font-size: 0.85rem;
+    color: #6c757d;
+    margin-top: 0.25rem;
+  }
+
+  .form-error {
+    font-size: 0.85rem;
+    color: var(--danger);
+    margin-top: 0.25rem;
+    display: flex;
+    align-items: center;
+    gap: 0.3rem;
+  }
+
+  /* File Upload */
+  .file-upload {
+    position: relative;
+  }
+
+  .file-input {
+    display: none;
+  }
+
+  .file-label {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.5rem;
+    padding: 1rem;
+    border: 2px dashed #e9ecef;
+    border-radius: 10px;
+    background: #f8f9fa;
+    cursor: pointer;
+    transition: all 0.3s;
+  }
+
+  .file-label:hover {
+    border-color: var(--primary);
+    background: rgba(25, 118, 210, 0.05);
+  }
+
+  .file-preview {
+    margin-top: 1rem;
+    padding: 1rem;
+    background: #f8f9fa;
+    border-radius: 8px;
+    display: none;
+  }
+
+  /* Checkbox/Radio */
+  .form-check {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    padding: 0.75rem;
+    background: #f8f9fa;
+    border-radius: 8px;
+    cursor: pointer;
+    transition: all 0.3s;
+  }
+
+  .form-check:hover {
+    background: #e9ecef;
+  }
+
+  .form-check input {
+    width: 20px;
+    height: 20px;
+    cursor: pointer;
+  }
+
+  .form-check label {
+    cursor: pointer;
+    margin: 0;
+    font-weight: 500;
+  }
+
+  /* Form Actions */
+  .form-actions {
+    display: flex;
+    gap: 1rem;
+    padding-top: 2rem;
+    border-top: 2px solid #f0f0f0;
+  }
+
+  .btn {
+    padding: 0.85rem 2rem;
+    border-radius: 10px;
+    text-decoration: none;
+    font-weight: 600;
+    font-size: 1rem;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.5rem;
+    transition: all 0.3s;
+    border: none;
+    cursor: pointer;
+  }
+
+  .btn-primary {
+    background: var(--primary);
+    color: white;
+    flex: 1;
+  }
+
+  .btn-primary:hover {
+    background: #1565C0;
+    transform: translateY(-2px);
+    box-shadow: 0 8px 20px rgba(25, 118, 210, 0.3);
+  }
+
+  .btn-secondary {
+    background: #6c757d;
+    color: white;
+  }
+
+  .btn-secondary:hover {
+    background: #5a6268;
+  }
+
+  /* Info Box */
+  .info-box {
+    background: linear-gradient(135deg, #E3F2FD, #BBDEFB);
+    border-left: 4px solid var(--primary);
+    padding: 1.25rem;
+    border-radius: 10px;
+    margin-bottom: 2rem;
+  }
+
+  .info-box-title {
+    font-weight: 700;
+    color: var(--primary);
+    margin: 0 0 0.5rem 0;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+  }
+
+  .info-box-text {
+    color: #1565C0;
+    margin: 0;
+    font-size: 0.95rem;
+  }
+
+  /* Progress Steps */
+  .progress-steps {
+    display: flex;
+    justify-content: space-between;
+    margin-bottom: 2rem;
+    position: relative;
+  }
+
+  .progress-steps::before {
+    content: '';
+    position: absolute;
+    top: 20px;
+    left: 0;
+    right: 0;
+    height: 2px;
+    background: #e9ecef;
+    z-index: 0;
+  }
+
+  .progress-step {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 0.5rem;
+    position: relative;
+    z-index: 1;
+  }
+
+  .step-circle {
+    width: 40px;
+    height: 40px;
+    border-radius: 50%;
+    background: white;
+    border: 3px solid #e9ecef;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-weight: 700;
+    color: #6c757d;
+  }
+
+  .step-circle.active {
+    background: var(--primary);
+    border-color: var(--primary);
+    color: white;
+  }
+
+  .step-label {
+    font-size: 0.85rem;
+    font-weight: 600;
+    color: #6c757d;
+  }
+
+  /* Responsive */
+  @media (max-width: 768px) {
+    .form-header {
+      padding: 2rem 1.5rem;
+    }
+
+    .header-title {
+      font-size: 1.6rem;
+    }
+
+    .form-card {
+      padding: 1.5rem;
+    }
+
+    .form-grid {
+      grid-template-columns: 1fr;
+    }
+
+    .form-actions {
+      flex-direction: column;
+    }
+
+    .btn {
+      width: 100%;
+    }
+
+    .progress-steps {
+      flex-direction: column;
+      align-items: flex-start;
+    }
+
+    .progress-steps::before {
+      display: none;
+    }
+  }
+
+  /* Custom Styling for Django Forms */
+  .form-row {
+    display: contents;
+  }
+
+  .errorlist {
+    list-style: none;
+    padding: 0;
+    margin: 0.5rem 0 0 0;
+  }
+
+  .errorlist li {
+    color: var(--danger);
+    font-size: 0.85rem;
+    display: flex;
+    align-items: center;
+    gap: 0.3rem;
+  }
+
+  .errorlist li::before {
+    content: '⚠️';
+  }
+
+  /* Animation */
+  @keyframes slideIn {
+    from {
+      opacity: 0;
+      transform: translateY(20px);
+    }
+    to {
+      opacity: 1;
+      transform: translateY(0);
+    }
+  }
+
+  .form-card {
+    animation: slideIn 0.5s ease-out;
+  }
+</style>
+
+<div class="container-fluid">
+  
+  <!-- Header -->
+  <header class="form-header">
+    <div class="header-content">
+      <h1 class="header-title">🏢 Créer une nouvelle agence</h1>
+      <p class="header-subtitle">Enregistrez une nouvelle agence immobilière sur la plateforme TogoEstate</p>
+      <div class="breadcrumb">
+        <a href="{% url 'dashboard_platform' %}">Dashboard</a>
+        <span>›</span>
+        <a href="{% url 'agency_list' %}">Agences</a>
+        <span>›</span>
+        <span>Créer</span>
+      </div>
+    </div>
+  </header>
+
+  <div class="form-container">
+    
+    <!-- Info Box -->
+    <div class="info-box">
+      <div class="info-box-title">
+        <i class="fa-solid fa-circle-info"></i>
+        Information importante
+      </div>
+      <p class="info-box-text">
+        Toutes les informations marquées d'un astérisque (*) sont obligatoires. Assurez-vous de fournir des données exactes pour faciliter la vérification de l'agence.
+      </p>
+    </div>
+
+    <!-- Progress Steps -->
+    <div class="progress-steps">
+      <div class="progress-step">
+        <div class="step-circle active">1</div>
+        <span class="step-label">Informations</span>
+      </div>
+      <div class="progress-step">
+        <div class="step-circle">2</div>
+        <span class="step-label">Vérification</span>
+      </div>
+      <div class="progress-step">
+        <div class="step-circle">3</div>
+        <span class="step-label">Activation</span>
+      </div>
+    </div>
+
+    <!-- Form Card -->
+    <div class="form-card">
+      <form method="post" enctype="multipart/form-data" id="agencyForm">
+        {% csrf_token %}
+
+        <!-- Display non-field errors -->
+        {% if form.non_field_errors %}
+          <div class="form-error" style="margin-bottom: 1.5rem; padding: 1rem; background: #FFEBEE; border-radius: 8px;">
+            {{ form.non_field_errors }}
+          </div>
+        {% endif %}
+
+        <!-- Section 1: Informations de base -->
+        <div class="form-section">
+          <h2 class="section-title">
+            <i class="fa-solid fa-building"></i>
+            Informations de base
+          </h2>
+          <div class="form-grid">
+            {% for field in form %}
+              {% if field.name in 'name,slug,email,phone' %}
+                <div class="form-field {% if field.name == 'name' %}full-width{% endif %}">
+                  <label for="{{ field.id_for_label }}" class="form-label">
+                    {{ field.label }}
+                    {% if field.field.required %}<span class="required">*</span>{% endif %}
+                  </label>
+                  {% if field.field.widget.input_type == 'text' or field.field.widget.input_type == 'email' %}
+                    <input type="{{ field.field.widget.input_type }}" 
+                           name="{{ field.name }}" 
+                           id="{{ field.id_for_label }}"
+                           class="form-input"
+                           value="{{ field.value|default:'' }}"
+                           {% if field.field.required %}required{% endif %}
+                           placeholder="{{ field.help_text|default:'' }}">
+                  {% else %}
+                    {{ field }}
+                  {% endif %}
+                  {% if field.help_text %}
+                    <span class="form-help">{{ field.help_text }}</span>
+                  {% endif %}
+                  {% if field.errors %}
+                    <div class="errorlist">
+                      {% for error in field.errors %}
+                        <li>{{ error }}</li>
+                      {% endfor %}
+                    </div>
+                  {% endif %}
+                </div>
+              {% endif %}
+            {% endfor %}
+          </div>
+        </div>
+
+        <!-- Section 2: Localisation -->
+        <div class="form-section">
+          <h2 class="section-title">
+            <i class="fa-solid fa-map-location-dot"></i>
+            Localisation
+          </h2>
+          <div class="form-grid">
+            {% for field in form %}
+              {% if field.name in 'city,region,district,address' %}
+                <div class="form-field {% if field.name == 'address' %}full-width{% endif %}">
+                  <label for="{{ field.id_for_label }}" class="form-label">
+                    {{ field.label }}
+                    {% if field.field.required %}<span class="required">*</span>{% endif %}
+                  </label>
+                  {{ field }}
+                  {% if field.help_text %}
+                    <span class="form-help">{{ field.help_text }}</span>
+                  {% endif %}
+                  {% if field.errors %}
+                    <div class="errorlist">
+                      {% for error in field.errors %}
+                        <li>{{ error }}</li>
+                      {% endfor %}
+                    </div>
+                  {% endif %}
+                </div>
+              {% endif %}
+            {% endfor %}
+          </div>
+        </div>
+
+        <!-- Section 3: Informations complémentaires -->
+        <div class="form-section">
+          <h2 class="section-title">
+            <i class="fa-solid fa-circle-info"></i>
+            Informations complémentaires
+          </h2>
+          <div class="form-grid">
+            {% for field in form %}
+              {% if field.name in 'website,description,logo' %}
+                <div class="form-field {% if field.name == 'description' or field.name == 'logo' %}full-width{% endif %}">
+                  <label for="{{ field.id_for_label }}" class="form-label">
+                    {{ field.label }}
+                    {% if field.field.required %}<span class="required">*</span>{% endif %}
+                  </label>
+                  
+                  {% if field.name == 'description' %}
+                    <textarea name="{{ field.name }}" 
+                              id="{{ field.id_for_label }}"
+                              class="form-textarea"
+                              {% if field.field.required %}required{% endif %}
+                              placeholder="Décrivez l'agence et ses services...">{{ field.value|default:'' }}</textarea>
+                  {% elif field.name == 'logo' %}
+                    <div class="file-upload">
+                      <input type="file" 
+                             name="{{ field.name }}" 
+                             id="{{ field.id_for_label }}"
+                             class="file-input"
+                             accept="image/*">
+                      <label for="{{ field.id_for_label }}" class="file-label">
+                        <i class="fa-solid fa-cloud-arrow-up"></i>
+                        Choisir un logo (optionnel)
+                      </label>
+                      <div class="file-preview" id="logoPreview"></div>
+                    </div>
+                  {% else %}
+                    {{ field }}
+                  {% endif %}
+                  
+                  {% if field.help_text %}
+                    <span class="form-help">{{ field.help_text }}</span>
+                  {% endif %}
+                  {% if field.errors %}
+                    <div class="errorlist">
+                      {% for error in field.errors %}
+                        <li>{{ error }}</li>
+                      {% endfor %}
+                    </div>
+                  {% endif %}
+                </div>
+              {% endif %}
+            {% endfor %}
+          </div>
+        </div>
+
+        <!-- Section 4: Statut -->
+        <div class="form-section">
+          <h2 class="section-title">
+            <i class="fa-solid fa-toggle-on"></i>
+            Statut
+          </h2>
+          {% for field in form %}
+            {% if field.name == 'verified' %}
+              <div class="form-check">
+                {{ field }}
+                <label for="{{ field.id_for_label }}">
+                  {{ field.label }}
+                  <span class="form-help" style="display: block; margin-top: 0.25rem;">Cochez cette case pour vérifier immédiatement l'agence</span>
+                </label>
+              </div>
+              {% if field.errors %}
+                <div class="errorlist">
+                  {% for error in field.errors %}
+                    <li>{{ error }}</li>
+                  {% endfor %}
+                </div>
+              {% endif %}
+            {% endif %}
+          {% endfor %}
+        </div>
+
+        <!-- Hidden fields -->
+        {% for field in form %}
+          {% if field.name not in 'name,slug,email,phone,city,region,district,address,website,description,logo,verified' %}
+            {{ field }}
+          {% endif %}
+        {% endfor %}
+
+        <!-- Form Actions -->
+        <div class="form-actions">
+          <a href="{% url 'agency_list' %}" class="btn btn-secondary">
+            <i class="fa-solid fa-arrow-left"></i>
+            Annuler
+          </a>
+          <button type="submit" class="btn btn-primary">
+            <i class="fa-solid fa-check"></i>
+            Créer l'agence
+          </button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+</div>
+
+<script>
+  // File upload preview
+  const fileInput = document.getElementById('{{ form.logo.id_for_label }}');
+  if (fileInput) {
+    fileInput.addEventListener('change', function(e) {
+      const file = e.target.files[0];
+      const preview = document.getElementById('logoPreview');
+      
+      if (file) {
+        const reader = new FileReader();
+        reader.onload = function(e) {
+          preview.innerHTML = `
+            <div style="display: flex; align-items: center; gap: 1rem;">
+              <img src="${e.target.result}" style="width: 80px; height: 80px; object-fit: cover; border-radius: 8px;">
+              <div>
+                <strong>${file.name}</strong><br>
+                <small>${(file.size / 1024).toFixed(2)} KB</small>
+              </div>
+            </div>
+          `;
+          preview.style.display = 'block';
+        };
+        reader.readAsDataURL(file);
+      }
+    });
+  }
+
+  // Auto-generate slug from name
+  const nameInput = document.querySelector('input[name="name"]');
+  const slugInput = document.querySelector('input[name="slug"]');
+  
+  if (nameInput && slugInput) {
+    nameInput.addEventListener('input', function() {
+      const slug = this.value
+        .toLowerCase()
+        .replace(/[^a-z0-9]+/g, '-')
+        .replace(/^-+|-+$/g, '');
+      slugInput.value = slug;
+    });
+  }
+
+  // Form validation
+  const form = document.getElementById('agencyForm');
+  if (form) {
+    form.addEventListener('submit', function(e) {
+      const requiredFields = form.querySelectorAll('[required]');
+      let isValid = true;
+      
+      requiredFields.forEach(field => {
+        if (!field.value.trim()) {
+          isValid = false;
+          field.style.borderColor = '#D32F2F';
+        } else {
+          field.style.borderColor = '#e9ecef';
+        }
+      });
+      
+      if (!isValid) {
+        e.preventDefault();
+        alert('Veuillez remplir tous les champs obligatoires.');
+      }
+    });
+  }
+</script>
+
 {% endblock %}

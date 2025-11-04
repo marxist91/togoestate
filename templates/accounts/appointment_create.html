@@ -1,0 +1,111 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="container mx-auto px-4 py-8">
+    <div class="max-w-2xl mx-auto">
+        <div class="bg-white rounded-lg shadow-lg overflow-hidden">
+            <div class="px-6 py-4 bg-gray-50 border-b">
+                <h1 class="text-2xl font-bold text-gray-900">Demander un rendez-vous</h1>
+            </div>
+
+            <div class="p-6">
+                <!-- Informations de la propriété -->
+                <div class="mb-6">
+                    <h3 class="text-lg font-semibold text-gray-900 mb-4">Propriété</h3>
+                    <div class="bg-gray-50 p-4 rounded-lg">
+                        <h4 class="font-medium text-gray-900">{{ listing.title }}</h4>
+                        <p class="text-gray-600 mt-1">{{ listing.address }}, {{ listing.city }}</p>
+                        <p class="text-green-600 font-semibold mt-2">{{ listing.price }} {{ listing.currency }}</p>
+                    </div>
+                </div>
+
+                <!-- Formulaire -->
+                <form method="post" class="space-y-6">
+                    {% csrf_token %}
+
+                    <div>
+                        <label for="scheduled_date" class="block text-sm font-medium text-gray-700 mb-2">
+                            Date et heure souhaitée *
+                        </label>
+                        <input type="datetime-local" id="scheduled_date" name="scheduled_date"
+                               class="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500"
+                               required>
+                        <p class="text-sm text-gray-500 mt-1">Choisissez une date et heure pour votre visite.</p>
+                    </div>
+
+                    <div>
+                        <label for="notes" class="block text-sm font-medium text-gray-700 mb-2">
+                            Notes supplémentaires (optionnel)
+                        </label>
+                        <textarea id="notes" name="notes" rows="4"
+                                  class="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500"
+                                  placeholder="Décrivez vos besoins spécifiques, questions particulières..."></textarea>
+                    </div>
+
+                    <!-- Informations sur l'agent -->
+                    <div class="bg-blue-50 p-4 rounded-lg">
+                        <h4 class="font-medium text-blue-900 mb-2">Votre agent</h4>
+                        <p class="text-blue-800">Un agent de l'agence {{ listing.agency.name }} vous contactera pour confirmer ce rendez-vous.</p>
+                    </div>
+
+                    <!-- Boutons -->
+                    <div class="flex gap-4 pt-4">
+                        <a href="{% url 'listing_detail' listing.slug %}" class="flex-1 bg-gray-500 hover:bg-gray-600 text-white px-4 py-2 rounded-lg text-center text-sm font-medium">
+                            Annuler
+                        </a>
+                        <button type="submit" class="flex-1 bg-blue-500 hover:bg-blue-600 text-white px-4 py-2 rounded-lg text-sm font-medium">
+                            Envoyer la demande
+                        </button>
+                    </div>
+                </form>
+
+                <!-- Informations importantes -->
+                <div class="mt-6 bg-yellow-50 p-4 rounded-lg">
+                    <h4 class="font-medium text-yellow-900 mb-2">À propos des rendez-vous</h4>
+                    <ul class="text-sm text-yellow-800 space-y-1">
+                        <li>• Votre demande sera examinée par un agent de l'agence</li>
+                        <li>• Vous recevrez une confirmation par email</li>
+                        <li>• L'agent pourra vous contacter pour ajuster la date si nécessaire</li>
+                        <li>• Vous pouvez annuler ou modifier votre rendez-vous depuis votre tableau de bord</li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+// Validation côté client pour la date
+document.addEventListener('DOMContentLoaded', function() {
+    const dateInput = document.getElementById('scheduled_date');
+    const form = dateInput.closest('form');
+
+    form.addEventListener('submit', function(e) {
+        const selectedDate = new Date(dateInput.value);
+        const now = new Date();
+
+        if (selectedDate <= now) {
+            e.preventDefault();
+            alert('Veuillez choisir une date et heure dans le futur.');
+            return false;
+        }
+
+        // Vérifier que c'est un jour ouvrable (lundi à samedi)
+        const dayOfWeek = selectedDate.getDay();
+        if (dayOfWeek === 0) { // Dimanche
+            e.preventDefault();
+            alert('Les rendez-vous ne sont pas disponibles le dimanche. Veuillez choisir un autre jour.');
+            return false;
+        }
+
+        // Vérifier les heures (9h à 18h)
+        const hour = selectedDate.getHours();
+        if (hour < 9 || hour >= 18) {
+            e.preventDefault();
+            alert('Les rendez-vous sont disponibles entre 9h et 18h. Veuillez choisir une autre heure.');
+            return false;
+        }
+    });
+});
+</script>
+{% endblock %}

@@ -1,0 +1,730 @@
+{% comment %}  {% extends "base.html" %}{% endcomment %}
+{% load static %}
+
+{% block title %}Annonces - {{ region.name }} | TogoEstate{% endblock %}
+
+{% block content %}
+
+<style>
+  :root {
+    --primary: #1976D2;
+    --secondary: #FF9800;
+    --success: #2E7D32;
+    --dark: #333;
+    --light-bg: #f8f9fa;
+    --border: #e0e0e0;
+    --shadow: 0 2px 8px rgba(0,0,0,0.1);
+    --shadow-lg: 0 4px 20px rgba(0,0,0,0.15);
+  }
+
+  * {
+    box-sizing: border-box;
+  }
+
+  body {
+    margin: 0;
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+    color: #333;
+    line-height: 1.6;
+    background: #f8f9fa;
+  }
+
+  /* NAVBAR */
+  .navbar {
+    background: linear-gradient(135deg, var(--primary) 0%, #1565C0 100%);
+    color: white;
+    padding: 1rem 1.5rem;
+    box-shadow: var(--shadow);
+    position: sticky;
+    top: 0;
+    z-index: 1000;
+  }
+
+  .navbar-container {
+    max-width: 1400px;
+    margin: 0 auto;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 2rem;
+  }
+
+  .navbar-brand {
+    font-size: 1.5rem;
+    font-weight: 700;
+    color: white;
+    text-decoration: none;
+    letter-spacing: -0.5px;
+    flex-shrink: 0;
+  }
+
+  .navbar-nav {
+    display: flex;
+    gap: 2rem;
+    align-items: center;
+    flex: 1;
+    justify-content: center;
+  }
+
+  .navbar-nav a {
+    color: white;
+    text-decoration: none;
+    font-weight: 500;
+    transition: opacity 0.3s;
+    white-space: nowrap;
+  }
+
+  .navbar-nav a:hover {
+    opacity: 0.8;
+  }
+
+  .navbar-actions {
+    display: flex;
+    gap: 1rem;
+    align-items: center;
+    flex-shrink: 0;
+  }
+
+  .btn-primary {
+    padding: 0.6rem 1.5rem;
+    background: var(--secondary);
+    color: white;
+    border-radius: 6px;
+    text-decoration: none;
+    font-weight: 600;
+    transition: transform 0.2s, box-shadow 0.2s;
+    display: inline-block;
+    white-space: nowrap;
+  }
+
+  .btn-primary:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(255, 152, 0, 0.4);
+  }
+
+  /* CONTAINER */
+  .container {
+    max-width: 1400px;
+    margin: 0 auto;
+    padding: 2rem 1.5rem;
+  }
+
+  /* HEADER */
+  .page-header {
+    margin-bottom: 2rem;
+  }
+
+  .page-title {
+    font-size: 2.5rem;
+    font-weight: 700;
+    margin: 0 0 0.5rem 0;
+    color: var(--dark);
+  }
+
+  .page-subtitle {
+    font-size: 1.1rem;
+    color: #666;
+    margin: 0 0 1rem 0;
+  }
+
+  .breadcrumb {
+    display: inline-block;
+    color: var(--primary);
+    text-decoration: none;
+    transition: color 0.3s;
+  }
+
+  .breadcrumb:hover {
+    color: #1565C0;
+  }
+
+  /* FILTERS */
+  .filters-box {
+    background: white;
+    border-radius: 12px;
+    padding: 2rem;
+    margin-bottom: 2rem;
+    box-shadow: var(--shadow);
+  }
+
+  .filters-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+    gap: 1rem;
+    margin-bottom: 1rem;
+  }
+
+  .filter-group label {
+    display: block;
+    font-size: 0.9rem;
+    font-weight: 600;
+    color: var(--dark);
+    margin-bottom: 0.5rem;
+  }
+
+  .filter-group select,
+  .filter-group input {
+    width: 100%;
+    padding: 0.7rem;
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    font-size: 0.95rem;
+    transition: border-color 0.3s;
+  }
+
+  .filter-group select:focus,
+  .filter-group input:focus {
+    outline: none;
+    border-color: var(--primary);
+  }
+
+  .filter-actions {
+    display: flex;
+    gap: 1rem;
+    margin-top: 1.5rem;
+  }
+
+  .btn-filter {
+    padding: 0.7rem 1.5rem;
+    background: var(--primary);
+    color: white;
+    border: none;
+    border-radius: 6px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: background 0.3s;
+  }
+
+  .btn-filter:hover {
+    background: #1565C0;
+  }
+
+  .btn-reset {
+    padding: 0.7rem 1.5rem;
+    background: #6c757d;
+    color: white;
+    border-radius: 6px;
+    text-decoration: none;
+    font-weight: 600;
+    transition: background 0.3s;
+    display: inline-block;
+  }
+
+  .btn-reset:hover {
+    background: #5a6268;
+  }
+
+  /* STATS */
+  .stats {
+    margin-bottom: 1.5rem;
+    color: #666;
+    font-size: 1rem;
+  }
+
+  /* LISTINGS GRID */
+  .listings-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+    gap: 1.5rem;
+    margin-bottom: 2rem;
+  }
+
+  .listing-card {
+    background: white;
+    border-radius: 12px;
+    overflow: hidden;
+    box-shadow: var(--shadow);
+    transition: all 0.3s;
+    position: relative;
+  }
+
+  .listing-card:hover {
+    transform: translateY(-8px);
+    box-shadow: var(--shadow-lg);
+  }
+
+  .listing-image {
+    width: 100%;
+    height: 200px;
+    object-fit: cover;
+  }
+
+  .listing-no-image {
+    width: 100%;
+    height: 200px;
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: white;
+    font-size: 1.1rem;
+  }
+
+  .listing-body {
+    padding: 1.2rem;
+  }
+
+  .listing-title {
+    font-size: 1.2rem;
+    font-weight: 700;
+    margin: 0 0 0.5rem 0;
+  }
+
+  .listing-title a {
+    color: var(--dark);
+    text-decoration: none;
+    transition: color 0.3s;
+  }
+
+  .listing-title a:hover {
+    color: var(--primary);
+  }
+
+  .listing-location {
+    color: #666;
+    font-size: 0.9rem;
+    margin: 0 0 0.8rem 0;
+  }
+
+  .listing-price {
+    font-size: 1.5rem;
+    font-weight: 700;
+    color: var(--success);
+    margin: 0.5rem 0 0.8rem 0;
+  }
+
+  .listing-type {
+    display: inline-block;
+    padding: 0.3rem 0.8rem;
+    background: var(--light-bg);
+    border-radius: 6px;
+    font-size: 0.85rem;
+    color: #666;
+    margin-bottom: 1rem;
+  }
+
+  .listing-footer {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding-top: 1rem;
+    border-top: 1px solid var(--border);
+  }
+
+  .listing-agency {
+    font-size: 0.85rem;
+    color: #888;
+  }
+
+  .btn-details {
+    color: var(--primary);
+    text-decoration: none;
+    font-weight: 600;
+    font-size: 0.9rem;
+    transition: all 0.3s;
+  }
+
+  .btn-details:hover {
+    color: #1565C0;
+    transform: translateX(4px);
+  }
+
+  /* PAGINATION */
+  .pagination {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    gap: 0.5rem;
+  }
+
+  .pagination a,
+  .pagination span {
+    padding: 0.6rem 1rem;
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    text-decoration: none;
+    color: var(--dark);
+    transition: all 0.3s;
+    font-size: 0.9rem;
+  }
+
+  .pagination a:hover {
+    background: var(--primary);
+    color: white;
+    border-color: var(--primary);
+  }
+
+  .pagination .active {
+    background: var(--primary);
+    color: white;
+    border-color: var(--primary);
+  }
+
+  /* EMPTY STATE */
+  .empty-state {
+    text-align: center;
+    padding: 4rem 2rem;
+    background: white;
+    border-radius: 12px;
+    box-shadow: var(--shadow);
+  }
+
+  .empty-icon {
+    font-size: 4rem;
+    margin-bottom: 1rem;
+    opacity: 0.5;
+  }
+
+  .empty-title {
+    font-size: 1.5rem;
+    font-weight: 700;
+    color: var(--dark);
+    margin: 0 0 0.5rem 0;
+  }
+
+  .empty-text {
+    color: #666;
+    margin: 0 0 1.5rem 0;
+  }
+
+  .empty-link {
+    color: var(--primary);
+    text-decoration: none;
+    font-weight: 600;
+    transition: color 0.3s;
+  }
+
+  .empty-link:hover {
+    color: #1565C0;
+  }
+
+  /* FOOTER */
+  .footer {
+    background: var(--dark);
+    color: white;
+    margin-top: 4rem;
+  }
+
+  .footer-cta {
+    background: linear-gradient(135deg, var(--primary) 0%, #1565C0 100%);
+    padding: 3rem 1.5rem;
+    text-align: center;
+  }
+
+  .footer-cta h3 {
+    font-size: 1.8rem;
+    margin: 0 0 0.5rem 0;
+  }
+
+  .footer-cta p {
+    margin: 0 0 1.5rem 0;
+    font-size: 1.1rem;
+    opacity: 0.95;
+  }
+
+  .footer-main {
+    max-width: 1400px;
+    margin: 0 auto;
+    padding: 3rem 1.5rem;
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+    gap: 3rem;
+  }
+
+  .footer-section h4 {
+    font-size: 1.2rem;
+    margin-bottom: 1rem;
+  }
+
+  .footer-links {
+    list-style: none;
+    padding: 0;
+    margin: 0;
+  }
+
+  .footer-links li {
+    margin-bottom: 0.5rem;
+  }
+
+  .footer-links a {
+    color: white;
+    text-decoration: none;
+    transition: color 0.3s;
+  }
+
+  .footer-links a:hover {
+    color: var(--secondary);
+  }
+
+  .social-links {
+    display: flex;
+    gap: 1rem;
+  }
+
+  .social-links a {
+    color: white;
+    text-decoration: none;
+    transition: color 0.3s;
+  }
+
+  .social-links a:hover {
+    color: var(--secondary);
+  }
+
+  @media (max-width: 768px) {
+    .navbar-container {
+      flex-direction: column;
+      gap: 1rem;
+    }
+
+    .navbar-nav {
+      gap: 1rem;
+      flex-wrap: wrap;
+      justify-content: center;
+    }
+
+    .navbar-actions {
+      flex-direction: column;
+      width: 100%;
+    }
+
+    .page-title {
+      font-size: 1.8rem;
+    }
+
+    .filters-grid {
+      grid-template-columns: 1fr;
+    }
+
+    .filter-actions {
+      flex-direction: column;
+    }
+
+    .btn-filter,
+    .btn-reset {
+      width: 100%;
+    }
+
+    .listings-grid {
+      grid-template-columns: 1fr;
+    }
+  }
+</style>
+
+<!-- NAVBAR -->
+<header class="navbar">
+  <div class="navbar-container">
+    <a href="/" class="navbar-brand">TogoEstate</a>
+    <nav class="navbar-nav">
+      <a href="{% url 'listing_list' %}">Annonces</a>
+      <a href="{% url 'agency_list' %}">Agences</a>
+      <a href="{% url 'about' %}">À propos</a>
+      <a href="{% url 'contact' %}">Contact</a>
+    </nav>
+    <div class="navbar-actions">
+      {% if user.is_authenticated %}
+        <span style="font-size:0.9rem;">Bonjour, {{ user.username }}</span>
+        <a href="{% url 'logout' %}" style="color:#fff; text-decoration:none;">Déconnexion</a>
+      {% else %}
+        <a href="{% url 'login' %}" style="color:#fff; text-decoration:none;">Se connecter</a>
+      {% endif %}
+      <a href="{% url 'listing_create' %}" class="btn-primary">
+        + Publier une annonce
+      </a>
+    </div>
+  </div>
+</header>
+
+<div class="container">
+  <!-- HEADER -->
+  <div class="page-header">
+    <h1 class="page-title">📍 Région {{ region.name }}</h1>
+    <p class="page-subtitle">
+      Découvrez toutes les annonces immobilières disponibles dans la région {{ region.name }}
+    </p>
+    <a href="{% url 'listing_list' %}" class="breadcrumb">
+      ← Retour à toutes les annonces
+    </a>
+  </div>
+
+  <!-- FILTERS -->
+  <div class="filters-box">
+    <form method="get">
+      <div class="filters-grid">
+        <div class="filter-group">
+          <label>Ville</label>
+          <select name="city">
+            <option value="">Toutes les villes</option>
+            {% for city in cities %}
+              <option value="{{ city.id }}" {% if filters.city == city.id|stringformat:"s" %}selected{% endif %}>
+                {{ city.name }}
+              </option>
+            {% endfor %}
+          </select>
+        </div>
+
+        <div class="filter-group">
+          <label>Type</label>
+          <select name="category">
+            <option value="">Tous types</option>
+            {% for cat in categories %}
+              <option value="{{ cat }}" {% if filters.category == cat %}selected{% endif %}>
+                {{ cat|title }}
+              </option>
+            {% endfor %}
+          </select>
+        </div>
+
+        <div class="filter-group">
+          <label>Transaction</label>
+          <select name="listing_type">
+            <option value="">Tous</option>
+            {% for type_val in types %}
+              <option value="{{ type_val }}" {% if filters.listing_type == type_val %}selected{% endif %}>
+                {{ type_val|title }}
+              </option>
+            {% endfor %}
+          </select>
+        </div>
+
+        <div class="filter-group">
+          <label>Prix minimum</label>
+          <input type="number" name="min_price" value="{{ filters.min_price }}" placeholder="Prix min">
+        </div>
+
+        <div class="filter-group">
+          <label>Prix maximum</label>
+          <input type="number" name="max_price" value="{{ filters.max_price }}" placeholder="Prix max">
+        </div>
+      </div>
+
+      <div class="filter-actions">
+        <button type="submit" class="btn-filter">🔍 Filtrer les résultats</button>
+        <a href="{% url 'region_listings' region.slug %}" class="btn-reset">🔄 Réinitialiser</a>
+      </div>
+    </form>
+  </div>
+
+  <!-- STATS -->
+  <div class="stats">
+    📊 {{ stats.total }} annonce{{ stats.total|pluralize }} trouvée{{ stats.total|pluralize }} dans la région {{ region.name }}
+  </div>
+
+  <!-- LISTINGS -->
+  {% if page_obj %}
+    <div class="listings-grid">
+      {% for listing in page_obj %}
+        <div class="listing-card">
+          {% if listing.cover %}
+            <img src="{{ listing.cover.image.url }}" alt="{{ listing.title }}" class="listing-image">
+          {% else %}
+            <div class="listing-no-image">📷 Pas d'image</div>
+          {% endif %}
+
+          <div class="listing-body">
+            <h3 class="listing-title">
+              <a href="{% url 'listing_detail' listing.slug %}">{{ listing.title }}</a>
+            </h3>
+
+            <p class="listing-location">
+              📍 {{ listing.city.name }} • {{ listing.get_category_display }}
+            </p>
+
+            <p class="listing-price">
+              {{ listing.price|floatformat:0 }} {{ listing.currency }}
+            </p>
+
+            <span class="listing-type">{{ listing.get_listing_type_display }}</span>
+
+            <div class="listing-footer">
+              <span class="listing-agency">{{ listing.agency.name }}</span>
+              <a href="{% url 'listing_detail' listing.slug %}" class="btn-details">
+                Voir détails →
+              </a>
+            </div>
+          </div>
+        </div>
+      {% endfor %}
+    </div>
+
+    <!-- PAGINATION -->
+    {% if page_obj.has_other_pages %}
+      <div class="pagination">
+        {% if page_obj.has_previous %}
+          <a href="?page={{ page_obj.previous_page_number }}{% for key, value in request.GET.items %}{% if key != 'page' %}&{{ key }}={{ value }}{% endif %}{% endfor %}">
+            ← Précédent
+          </a>
+        {% endif %}
+
+        {% for num in page_obj.paginator.page_range %}
+          {% if page_obj.number == num %}
+            <span class="active">{{ num }}</span>
+          {% elif num > page_obj.number|add:'-3' and num < page_obj.number|add:'3' %}
+            <a href="?page={{ num }}{% for key, value in request.GET.items %}{% if key != 'page' %}&{{ key }}={{ value }}{% endif %}{% endfor %}">
+              {{ num }}
+            </a>
+          {% endif %}
+        {% endfor %}
+
+        {% if page_obj.has_next %}
+          <a href="?page={{ page_obj.next_page_number }}{% for key, value in request.GET.items %}{% if key != 'page' %}&{{ key }}={{ value }}{% endif %}{% endfor %}">
+            Suivant →
+          </a>
+        {% endif %}
+      </div>
+    {% endif %}
+  {% else %}
+    <!-- EMPTY STATE -->
+    <div class="empty-state">
+      <div class="empty-icon">🏠</div>
+      <h3 class="empty-title">Aucune annonce trouvée</h3>
+      <p class="empty-text">
+        Il n'y a pas encore d'annonces dans cette région ou correspondant à vos critères.
+      </p>
+      <a href="{% url 'region_listings' region.slug %}" class="empty-link">
+        Voir toutes les annonces de la région →
+      </a>
+    </div>
+  {% endif %}
+</div>
+
+<!-- FOOTER -->
+<footer class="footer">
+  <!-- CTA -->
+  <div class="footer-cta">
+    <h3>Vous souhaitez devenir agent immobilier ?</h3>
+    <p>Inscrivez-vous aujourd'hui et rejoignez notre réseau de professionnels certifiés.</p>
+    <a href="#" class="btn-primary">S'inscrire maintenant</a>
+  </div>
+
+  <!-- MAIN FOOTER -->
+  <div class="footer-main">
+    <div class="footer-section">
+      <h4>TogoEstate</h4>
+      <p>Lomé, Maritime, Togo</p>
+      <p>© 2025 TogoEstate.<br>Tous droits réservés.</p>
+    </div>
+
+    <div class="footer-section">
+      <h4>Liens rapides</h4>
+      <ul class="footer-links">
+        <li><a href="{% url 'about' %}">À propos</a></li>
+        <li><a href="{% url 'contact' %}">Contact</a></li>
+        <li><a href="#">Aide</a></li>
+        <li><a href="#">Mentions légales</a></li>
+        <li><a href="#">Confidentialité</a></li>
+      </ul>
+    </div>
+
+    <div class="footer-section">
+      <h4>Suivez-nous</h4>
+      <div class="social-links">
+        <a href="#">Facebook</a>
+        <a href="#">Instagram</a>
+        <a href="#">LinkedIn</a>
+      </div>
+    </div>
+  </div>
+</footer>
+
+{% endblock %}

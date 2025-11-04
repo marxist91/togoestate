@@ -1,0 +1,72 @@
+import pytest
+from django.contrib.auth import get_user_model
+from rest_framework.test import APIClient
+from listings.models import Listing, City
+from agencies.models import Agency  # ⚠️ adapte le chemin si ton modèle est ailleurs
+
+User = get_user_model()
+
+
+@pytest.fixture
+def api_client():
+    """Client DRF pour simuler des appels API."""
+    return APIClient()
+
+
+@pytest.fixture
+def city(db):
+    """Ville de test."""
+    return City.objects.create(name="Lomé")
+
+
+@pytest.fixture
+def agency(db):
+    """Agence de test."""
+    return Agency.objects.create(name="Agence Test")
+
+
+@pytest.fixture
+def agency_admin(db, agency):
+    """Utilisateur avec rôle agency_admin."""
+    user = User.objects.create_user(username="admin", password="pass")
+    user.roles = ["agency_admin"]  # ⚠️ adapte selon ton champ custom
+    user.agency = agency           # si ton User a un FK vers Agency
+    user.save()
+    return user
+
+
+@pytest.fixture
+def agent(db, agency):
+    """Utilisateur avec rôle agent."""
+    user = User.objects.create_user(username="agent", password="pass")
+    user.roles = ["agent"]
+    user.agency = agency
+    user.save()
+    return user
+
+
+@pytest.fixture
+def normal_user(db):
+    """Utilisateur sans rôle particulier."""
+    return User.objects.create_user(username="normal", password="pass")
+
+
+@pytest.fixture
+def listing(db, city, agency, agency_admin):
+    """Annonce de test liée à une agence et un owner."""
+    return Listing.objects.create(
+        title="Maison test",
+        slug="maison-test",
+        price=100000,
+        currency="XOF",
+        city=city,
+        category="Maison",
+        listing_type="Vente",
+        surface=120,
+        bedrooms=3,
+        bathrooms=2,
+        address="Rue 123",
+        owner=agency_admin,
+        agency=agency,
+        published=True,
+    )

@@ -2,7 +2,8 @@ from django.test import TestCase, Client
 from django.urls import reverse
 from django.contrib.auth import get_user_model
 from django.contrib.auth.models import Permission
-from listings.models import Listing, Agency, City  # 👈 Import City
+from listings.models import Listing
+from agencies.models import Agency, City, District, Region  # 👈 Import from agencies
 
 User = get_user_model()
 
@@ -14,13 +15,17 @@ class ListingAdminPermissionsTests(TestCase):
         cls.app_label = "listings"
         cls.model_name = "listing"
 
-        # Deux agences
-        cls.agency1 = Agency.objects.create(name="Agence Alpha", city="Lomé")
-        cls.agency2 = Agency.objects.create(name="Agence Beta", city="Kara")
+        # Créer région et district pour les villes
+        cls.region = Region.objects.create(name="Maritime")
+        cls.district = District.objects.create(name="Lomé", region=cls.region)
 
         # Deux villes
-        cls.city1 = City.objects.create(name="Lomé")
-        cls.city2 = City.objects.create(name="Kara")
+        cls.city1 = City.objects.create(name="Lomé", district=cls.district)
+        cls.city2 = City.objects.create(name="Kara", district=cls.district)
+
+        # Deux agences
+        cls.agency1 = Agency.objects.create(name="Agence Alpha", city=cls.city1)
+        cls.agency2 = Agency.objects.create(name="Agence Beta", city=cls.city2)
 
         # Permissions nécessaires
         view_perm = Permission.objects.get(codename="view_listing")
